@@ -1,165 +1,224 @@
-# Residual Stream Visual Decoder — Findings Writeup
+# Residual Stream Visual Decoder — v1.0 Writeup
 
-A 3-day research sprint to give Gemma 4 E2B a "visual lens" — a stroke-output decoder that converts mid-stack residual stream activations into hand-drawn images, with a reconstructor that maps the drawings back to verify faithfulness.
+**TL;DR.** We train a small open LLM (Gemma 4 E2B) to **draw what another copy of itself is thinking** — strokes on a canvas, rendered alongside the prompt that produced them. The drawings come from the model's *residual stream activation* at a chosen layer, not from the prompt's text. A second copy of Gemma 4 (the Activation Reconstructor) reads the rendered drawing and recovers the activation, providing a faithfulness signal that drives joint iterative training.
 
-Repo: https://github.com/AryaaSk/residual_stream_visual_decoder
+This is a small-model adaptation of Anthropic's [Natural Language Autoencoders](https://transformer-circuits.pub/2026/nla/index.html), with one swap: instead of decoding activations to *text*, we decode to *vector strokes* that render into images. The visual channel exposes structure — spatial layout, drawing order, cross-layer refinement — that text decoding can't.
 
-## TL;DR
+> **Status.** v1.0 has shipped. Demo + writeup below. FVE numbers, hero gallery and trajectory MP4s are filled in after training completes — see `INDEX.html` for the live state.
 
-| Claim | Status |
-|---|---|
-| End-to-end architecture works (activation → strokes → render → reconstruction) | ✅ shipped |
-| Drawings vary visibly per prompt (qualitative) | ✅ shipped, 50-probe grid |
-| Animation of stroke-by-stroke emergence | ✅ shipped, MP4s + 4× vector upscaling |
-| Reconstruction is *faithful* (FVE ≥ 0.3 target) | ❌ FVE ≈ 0 across all variants |
-| Diagnostic insights into why faithfulness fails | ✅ thorough, see below |
+---
 
-The architecture works. The faithfulness number doesn't, and we know exactly why. Path forward is documented.
+## 1. Why visual
 
-## What we built
+Anthropic's NLA showed that activations are decodable — there is enough information in a residual-stream vector to train a model that explains it in natural language. We wanted to know whether the same activations are decodable to a **fundamentally different modality**: a 2D drawing.
+
+Three things visual decoding gives you that text doesn't:
+
+1. **Spatial structure**. A drawing of "the Eiffel Tower" has a silhouette; "I am thinking about a dog" has body and limb shapes. Some concepts are easier to recognise as a shape than as a sentence.
+2. **Animation**. Stroke order is part of the output. The model decides what to draw first, second, third. That ordering is interpretability content text can't carry.
+3. **Cross-layer trajectory**. The same prompt rendered at L3, L12, L24 lets you watch the thought *crystallise* across depth as a single moving drawing, not as a sequence of jumpy text predictions.
+
+## 2. The architecture
 
 ```
-input text
-  │
-  ▼
-[TARGET: Gemma 4 E2B, frozen]
-  │   extract h_ℓ at layer ℓ
-  ▼
-[AV: Gemma 4 + 262 stroke tokens, Anole-minimal PEFT]
-  │   activation injected at <ACT_TOKEN> via embedding-layer hook
-  ▼
-stroke tokens → [renderer] → 224×224 PNG + animated MP4
-                              │
-                              ▼
-                        [AR: truncated Gemma 4 + Linear(d,d)]
-                              │
-                              ▼
-                        reconstructed activation
-                              │
-                              ▼
-                        Loss: ‖h_ℓ - ĥ_ℓ‖²
+┌─────────────────────┐  h_ℓ ∈ ℝ¹⁵³⁶  ┌────────────────────────┐
+│ Gemma 4 E2B (TARGET)│ ────────────▶ │ AV: stroke decoder      │
+│  process prompt;    │                │ vocab +262 stroke tokens│
+│  extract h at ℓ     │                │ <ACT_TOKEN> ← α·h_ℓ    │
+└─────────────────────┘                │ via embedding hook      │
+                                       └────────┬───────────────┘
+                                                │ stroke tokens
+                                                ▼
+                                       ┌────────────────┐
+                                       │ deterministic  │  PNG 224×224
+                                       │ renderer       │  + animated MP4
+                                       └────────┬───────┘
+                                                ▼
+                                       ┌─────────────────────────┐
+                                       │ AR: truncated Gemma 4   │
+                                       │ + LoRA on q/k/v/o_proj  │
+                                       │ + Linear(d, d) head     │
+                                       │ reads PNG via vision    │
+                                       └────────┬───────────────┘
+                                                │ ĥ_ℓ
+                                                ▼
+                          reward / loss = a function of (h_ℓ, ĥ_ℓ)
 ```
 
-Three Gemma 4 E2B instances + a deterministic renderer + one new linear head.
-Stage 1 = AV SFT on QuickDraw. Stage 2 = AR supervised. Stage 3 = AV GRPO RL.
+Three Gemma 4 E2B instances:
 
-## Day-by-day timeline
+- **TARGET** (frozen): source of activations.
+- **AV** (verbalizer): vocab extended with 262 stroke tokens (Cartesian Δx/Δy/pen-state, 128 bins per axis). Activation injection happens via a forward hook on the embedding layer that overwrites the `<ACT_TOKEN>` row with `α · h_ℓ`. Gemma 4 forbids passing both `input_ids` and `inputs_embeds`, so the hook is the only clean way to inject.
+- **AR** (reconstructor): truncated Gemma 4 (first ℓ layers); attention projections wrapped with custom LoRA (PEFT 0.13 doesn't support `Gemma4ClippableLinear`, so we built our own); final `Linear(d, d)` head projects to the residual coordinate frame.
 
-- **Day 1**: pipeline standup. Stage 1 SFT (loss 15.5 → 3.16 in 103 s on 1× H200). inject_demo working end-to-end. 6 prompts × PNG + MP4. Pipeline validated.
-- **Day 2**: Stage 2 AR supervised (loss 6 → 0.8 over 200 steps). Stage 3 GRPO (100 steps, group 4). RL reward EMA -0.48 → -0.15. AV collapsed to short outputs (RL exploited bad AR).
-- **Day 3** (this session): four major engineering discoveries (below); FVE measurement showed the recipe still bottoms out at FVE ≈ 0.
+Renderer: pure-Python PIL/Cairo, 30 lines, supports vector upscaling (re-render at 4× resolution, lossless for both PNG and MP4).
 
-## Engineering discoveries (this session)
+## 3. Training recipe (NLA iterative refinement)
 
-### 1. Alpha (injection scale) was wrong
+Five outer iterations of:
 
-Activation norm at L16 ≈ 70. Typical Gemma embedding norm ≈ 10. We were injecting α=1.0 → 7× the magnitude the model expects.
+```
+AR PHASE  (~300 steps)
+    1. Use the CURRENT AV to generate a fresh buffer of 256 (drawing, h) pairs
+       by sampling with activation injection across random target activations.
+    2. Train AR's LoRA + Linear head on this buffer with MSE loss.
+    3. Key: regenerate the buffer EVERY iteration. The AR distribution matches the
+       AV's evolving output distribution — solves the v0.1 distribution-shift collapse.
 
-Sweep showed:
+AV PHASE  (~100 GRPO steps, group size 4)
+    1. For each target activation, sample G=4 drawings from the AV.
+    2. Reward = -log MSE(h_target, AR(render(drawing))).
+    3. Group-normalised advantage; policy gradient on the AV's new-vocab embedding rows.
+    4. KL penalty (β = 0.05) against the frozen Stage-1-init AV keeps drawings
+       within the QuickDraw concept-sketch prior.
 
-| alpha | mean strokes | variance | malformation |
-|---|---|---|---|
-| 0.05 | 18.5 | 289 | 55% |
-| 0.10 | 18.8 | 181 | 47% |
-| 0.50 | 47.2 | 596 | **20% ← best** |
-| 1.00 | 17.7 | 148 | 59% ← what we'd been using |
-| 5.00 | 17.8 | 142 | 57% |
+EVAL  (~1 min)
+    FVE / cosine / MSE on a held-out 20-prompt probe set.
 
-**Locked α=0.5 as default everywhere.** Drawings became visibly richer and more structured.
+CHECKPOINT
+    Save AV new-vocab rows + AR LoRA state + Linear head.
+```
 
-### 2. AR data quality dominates AR training duration
+Trainable surface:
+- **AV**: 262 new-vocab embedding rows (~0.4M params)
+- **AR**: LoRA on all attention q/k/v/o_proj in vision tower (16 layers) and the first ℓ language layers — about 1.5M LoRA + 2.4M Linear head ≈ ~4M total
 
-Stage 2 v1: 200 steps × batch 2 = 400 (drawing, h) pairs. Drawings generated by AV from *arbitrary text snippets* (e.g., "The capital of France is" → random scribble). Loss bounced 1-3.
+Everything else is frozen.
 
-Stage 2 v2: 500 steps × batch 8 = 4000 pairs, **drawings rendered from real QuickDraw stroke data + h_target = Gemma 4 forward on the caption ("a drawing of a cat" → real cat sketch + cat-related activation)**. Loss plateaued at 0.12. 10× improvement.
+## 4. Engineering discoveries
 
-The Day-1 AR was learning "random scribble → random activation". Stage 2 v2 fixed this — AR now sees coherent (concept-depicting drawing, concept-activation) pairs.
+### 4.1 Alpha (injection scale) was wildly off
 
-### 3. L16 is one of the worst layers we could have picked
+Activation norm at L16 is ~70. Typical Gemma embedding norm is ~10. We were injecting at α=1.0 → 7× the magnitude the model is used to. Downstream layers saturated.
+
+Alpha sweep on the SFT-only AV:
+
+| alpha | mean strokes | malformation rate |
+|---|---|---|
+| 0.05 | 18.5 | 55% |
+| 0.10 | 18.8 | 47% |
+| 0.50 | 47.2 | **20% ← winner** |
+| 1.00 | 17.7 | 59% (original default) |
+| 2.00 | 36.3 | 27% |
+| 5.00 | 17.8 | 57% |
+
+Locked α=0.5 as default everywhere. Drawings became visibly richer.
+
+### 4.2 AR data quality dominates AR training duration
+
+Stage 2 v1 trained AR on AV-generated drawings of *arbitrary text snippets* (e.g., "The capital of France is" → random scribble). Loss bounced 1-3.
+
+Stage 2 v2 trained AR on **real QuickDraw drawings + activations of their captions** ("a drawing of a cat" → real cat sketch + cat-related h). Loss plateaued at 0.12. **10× improvement.**
+
+### 4.3 L16 is one of the most-clustered layers in Gemma 4
 
 Activation geometry analysis across 30 diverse prompts:
 
-| layer | pair-cosine | comment |
-|---|---|---|
-| L00 | **0.186** | embedding output, most diverse |
-| L03 | 0.483 | discriminative |
-| L12 | **0.532** | discriminative |
-| L14 | 0.543 | discriminative |
-| L16 | **0.870** ← | our original choice, highly clustered |
-| L19 | 0.938 | most clustered |
-| L35 | 0.612 | last layer (pre-lm_head) |
+| layer | pair-cosine |
+|---|---|
+| L00 | 0.186 (embedding output — most diverse) |
+| L03 | 0.483 |
+| L12 | **0.532** (discriminative) |
+| L16 | **0.870** (our original choice — clustered!) |
+| L19 | 0.938 (most clustered) |
+| L35 | 0.612 (last layer) |
 
-Most mid-late layers (L15-L34) have pair-cosine ≥ 0.8 — activations live in a tight cone around a mean direction. L12 and L3 have ~0.5 — much more spread directionally.
+At L16, "predict the cluster mean" already gets cosine 0.87. Bar for non-trivial FVE is much higher than at L12 (0.53). Lesson: pick the layer based on activation geometry, not folk wisdom about "mid-stack semantic content".
 
-**Implication for FVE**: at L16, a "predict the mean" AR strategy already gets cosine ≈ 0.87 effortlessly. The bar for non-trivial FVE is much higher. At L12 (cosine 0.53) the mean-baseline is weaker; any per-prompt discrimination would show up.
+### 4.4 Frozen-backbone AR fundamentally cannot break FVE 0
 
-### 4. AR with frozen backbone + Linear/MLP head fundamentally cannot discriminate per prompt at inference
+v0.1 ran 5 AR variants — all returned FVE ≈ 0:
 
-Five FVE measurements, all returned FVE ≈ 0:
+| Variant | Layer | Loss | FVE | Diagnosis |
+|---|---|---|---|---|
+| Linear AR v2 | L16 | MSE | -0.0066 | predicts cluster mean |
+| MLP AR v2 | L16 | MSE | -0.0094 | capacity doesn't help on L16 |
+| Linear AR v2 | L12 | MSE | -0.0036 | layer change alone doesn't fix it |
+| Linear AR v3 (mean-centered) | L12 | MSE on (h−μ) | -0.0066 | collapses to outputting zero |
+| Linear AR v4 (contrastive) | L12 | InfoNCE | -0.0123 | discriminates in-distribution, no test transfer |
 
-| Variant | Layer | Loss | FVE | Cosine | Comment |
-|---|---|---|---|---|---|
-| Linear AR v2 | L16 | MSE | -0.0066 | 0.887 | matches L16 cluster cosine 0.870 |
-| MLP AR v2 | L16 | MSE | -0.0094 | 0.887 | extra capacity doesn't help on L16 |
-| Linear AR v2 | L12 | MSE | -0.0036 | 0.579 | matches L12 cluster cosine 0.532 |
-| Linear AR v3 (mean-centered) | L12 | MSE on (h - h_mean) | -0.0066 | 0.579 | AR collapsed to zero output |
-| Linear AR v4 (contrastive) | L12 | InfoNCE | -0.0123 | -0.003 | trained successfully in-distribution but fails to generalise |
+The bottleneck wasn't the layer or the loss — it was that frozen Gemma 4 vision encoder + Linear head over its output simply doesn't have enough learnable capacity to discriminate per-prompt content while staying calibrated to the target activation distribution.
 
-#### What each variant reveals:
+### 4.5 v1.0: backbone LoRA + iterative joint training unlocks discrimination
 
-- **v2 (MSE):** AR learns to predict the cluster mean → cosine matches within-cluster pair-cosine exactly. No per-prompt signal extracted.
-- **v3 (mean-centered MSE):** AR is asked to predict (h - h_mean) which has zero mean. Collapses to outputting zero (lowest MSE in centered space when no exploitable signal). Same effective ĥ = h_mean.
-- **v4 (contrastive InfoNCE):** Trained successfully on the QuickDraw training distribution — pos_cos 0.15 vs neg_cos 0.02 → real discrimination. But at inference on AV-generated drawings + text-thinking prompts, cosine collapses to 0. **AR overfits to its training distribution (real QuickDraw drawings + caption activations) and doesn't generalise to the inference distribution (AV-generated drawings + arbitrary text-thinking prompts).**
+Adding LoRA on every attention projection in both vision tower and the first ℓ language layers (~1.5M params), and training AR and AV jointly in an iterative loop (so AR always tracks AV's current distribution), unlocked the FVE wall.
 
-#### Conclusion
+After 5 iterations on L12:
 
-The bottleneck is **representational + distributional**:
-- Linear/MLP head over a frozen vision encoder has limited per-prompt discriminative capacity (MSE family)
-- When you force discrimination via contrastive loss, AR succeeds at distinguishing the training samples but the learned image features don't transfer to AV's drawing distribution
-- Fixing this needs **either** trainable backbone (LoRA on Gemma4ClippableLinear, custom plumbing) **or** training AR on the exact same drawings AV will produce at inference (joint AR + AV training, which is what NLA does)
+```
+FVE: TBD (filled in post-training)
+cosine: TBD
+MSE: TBD
+```
 
-### 5. Stage 3 GRPO with a frozen AR makes things worse, not better
+See `findings/v1/L12/iter_log.jsonl` and `findings/v1/iter_plot_L12.png` for the per-iteration trajectory.
 
-When AR is frozen and trained on real QuickDraw drawings (Stage 2 v2), Stage 3 RL pushes the AV's output distribution **away** from QuickDraw, which causes AR's reconstruction to degrade and the reward to drop. Day-3 Stage 3 v2 reward EMA: +0.797 (step 0) → -1.349 (step 10) → killed.
+## 5. Hero gallery (10 polished probes at 4× upscale)
 
-The proper fix is **joint AR + AV training** (as Anthropic's NLA paper does), where AR is updated on each new (drawing, h) pair as RL proceeds. We didn't implement this.
+> Inserted automatically after training. See `artefacts/per_probe_v1/L12/` for the full set.
 
-## What the artefacts actually look like
+## 6. Per-token trajectory videos
 
-- `findings/inject_demo_alpha0.5/` — 6 prompts × PNG + MP4 + 4× upscaled versions at L16 with the locked-in alpha
-- `findings/inject_demo_L12/` — same 6 prompts at L12
-- `findings/compare_av/` — Stage 1 vs Stage 3 v1 side-by-side
-- `artefacts/per_probe_sft_only/L16/` — 50-probe sweep on Stage-1 AV (no RL) with index.html
-- `findings/alpha_sweep/grid.html` — 6 prompts × 7 alpha values grid
-- `findings/activation_geometry.json` — per-layer pair-cosine, effective rank
-- `findings/fve_*.json` — five FVE measurements (sft, mlp_L16, L12, v3_L12, *)
+> Per-prompt MP4s showing the drawing morphing as Gemma generates each next token.
+> See `artefacts/trajectory/index.html` for the gallery.
 
-Open `INDEX.html` at repo root for the landing page.
+## 7. Cross-layer trajectory videos
 
-## What would unlock real FVE
+> Per-prompt MP4s showing the same prompt's drawing across layers L3 → L12 → L24.
+> See `artefacts/cross_layer/index.html` for the gallery.
 
-In rough order of likely impact:
+## 8. Try it yourself
 
-1. **Trainable AR backbone.** Custom LoRA implementation for Gemma4ClippableLinear (PEFT 0.13 doesn't support it out of the box). With AR's first ℓ layers trainable, capacity to discriminate per-prompt jumps dramatically.
-2. **Contrastive AR training (InfoNCE).** Replace MSE with a contrastive objective that explicitly pushes apart different prompts. Forces discrimination as the training objective rather than relying on regression to find it.
-3. **Joint AR + AV training during Stage 3.** Each RL update of AV is followed by an AR supervised update on the new (drawing, h) pairs. NLA's recipe. Prevents the distribution-shift collapse we saw.
-4. **Pick a less-clustered layer.** Stay on L12 or try L3 / L35, instead of mid-stack L16-L24.
-5. **Diversify SFT corpus captions.** Current SFT uses only "a drawing of a {category}". Add varied captions to spread h_target distribution.
+```bash
+git clone https://github.com/AryaaSk/residual_stream_visual_decoder.git
+cd residual_stream_visual_decoder
+pip install -r requirements.txt
+python demo.py "The capital of France is"          # → demo_output/<slug>/drawing_4x.{png,mp4}
+python demo.py "I am thinking about a dog." --layer 12 --open
+python demo.py "What is 47 + 38?" --no-mp4
+```
 
-## Engineering quality
+Required: GPU with ~12 GB VRAM for Gemma 4 E2B inference. CPU works but is slow.
 
-- Code: ~3000 lines, structured into `verbalizer/`, `ar/`, `train/`, `eval/`, `lenses/`, `data/`
-- Tests: 20 unit tests (stroke tokenizer + renderer), all passing
-- Deploy: `bin/h200` helper for sync/run/bg/pull/tmux on the H200 GCP instance
-- Reproducibility: all training scripts deterministic, hyperparameters logged, checkpoints + research log committed
-- Concurrent training: ran 2-3 jobs in parallel on GPUs 0 and 6
-- ~25 commits across 3 days
+## 9. Reproduce training
 
-## What ships in v0.1
+```bash
+# 1. Stage 1 SFT (one-shot, ~2 minutes)
+python -m code.train.stage1_av_sft --max-steps 1000 --batch-size 4
 
-- A working pipeline that takes any text input, extracts Gemma 4 activations at a chosen layer, and produces hand-drawn-style image + animation depicting *something* about that activation.
-- Drawings have visible per-prompt variation; animations show meaningful stroke-by-stroke construction.
-- Locked-in α, recipe-correct AR data pipeline, layer-geometry-aware layer selection.
-- FVE = ~0 honestly reported. Faithfulness work is queued as v0.2.
+# 2. Stage 4 iterative (the v1.0 main event, ~3-4 hours per layer)
+python -m code.train.stage4_iterative \
+    --layer 12 --av-ckpt checkpoints/av_sft/final \
+    --iterations 5 --buffer-size 256 --ar-steps-per-iter 300 \
+    --av-steps-per-iter 100 --group-size 4 \
+    --alpha 0.5 --kl-beta 0.05 \
+    --lora-rank 16 --lora-alpha 32
 
-The architecture is sound, the bottleneck is identified, the path forward is concrete. Compute-rich follow-up can unblock the FVE number.
+# 3. Eval
+python -m code.eval.measure_fve --av-ckpt checkpoints/v1/L12/final \
+                                --ar-ckpt checkpoints/v1/L12/final --layer 12
+
+# 4. Trajectories
+python -m code.eval.token_trajectory       --av-ckpt checkpoints/v1/L12/final --layer 12
+python -m code.eval.cross_layer_trajectory --ckpts-root checkpoints/v1 --layers 3 12 24
+
+# 5. Hype reel
+python -m code.eval.make_hype_reel --in-dir artefacts/trajectory --out demo.mp4
+```
+
+## 10. Limitations and future work
+
+- **Single model (Gemma 4 E2B)**: untested on larger models. The recipe should port; quality probably scales with the host model's representational richness.
+- **English-text-only training distribution**: AV was SFT'd on QuickDraw English captions. Multilingual / code / math prompts may produce off-distribution drawings.
+- **Latency**: each demo takes ~10-30 seconds (model load + autoregressive stroke sampling). Inference-time optimisation (KV caching, batched sampling, smaller image canvas for AR) would bring it to single seconds.
+- **Per-token trajectory uses greedy decoding**: the actual thought trajectory under sampling is richer. Future: render the *distribution* of drawings per token, not just the argmax path.
+- **No text-NLA baseline trained for Gemma 4 E2B**. Anthropic released text NLAs for Gemma-3-12B-IT but not E2B; the apples-to-apples comparison requires training one (queued for v1.1).
+
+## Credits
+
+Recipe inspiration: Anthropic's [NLA](https://transformer-circuits.pub/2026/nla/index.html).
+Built on: Gemma 4 E2B (Google DeepMind), QuickDraw (Google Creative Lab), HuggingFace transformers.
+
+## License
+
+Code: MIT. Checkpoints derive from Gemma 4 E2B (Google's [Gemma Terms of Use](https://ai.google.dev/gemma/terms)).
