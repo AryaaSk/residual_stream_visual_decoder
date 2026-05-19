@@ -53,6 +53,7 @@ def render(
     line_width: int = DEFAULT_LINE_WIDTH,
     save_animation_path: str | Path | None = None,
     fps: int = 24,
+    display_scale: float = 1.0,
 ) -> Image.Image:
     """Render a stroke sequence to a PIL Image.
 
@@ -60,23 +61,32 @@ def render(
     drawing emerging stroke by stroke. Use ``.mp4`` extension for video,
     ``.gif`` for GIF. One frame per stroke.
 
-    The returned PIL Image is the final canvas (post-last-stroke). Same data
-    used by both AR and any human viewer.
+    `display_scale` re-renders the same stroke data at an upscaled resolution
+    by multiplying canvas_size, all stroke (Δx, Δy) offsets, and line_width
+    by the scale factor. Lossless vector upscaling (no interpolation). Useful
+    for producing display-quality artefacts while AR still sees the 224×224
+    native resolution.
+
+    The returned PIL Image is the final canvas (post-last-stroke).
     """
-    canvas = _new_canvas(canvas_size)
+    s_size = int(round(canvas_size * display_scale))
+    s_line = max(1, int(round(line_width * display_scale)))
+    canvas = _new_canvas(s_size)
     draw = ImageDraw.Draw(canvas)
-    pen_x = canvas_size / 2.0
-    pen_y = canvas_size / 2.0
+    pen_x = s_size / 2.0
+    pen_y = s_size / 2.0
     frames: list[Image.Image] = []
 
     for s in strokes:
-        new_x = _clamp(pen_x + s.dx, 0, canvas_size - 1)
-        new_y = _clamp(pen_y + s.dy, 0, canvas_size - 1)
+        sdx = s.dx * display_scale
+        sdy = s.dy * display_scale
+        new_x = _clamp(pen_x + sdx, 0, s_size - 1)
+        new_y = _clamp(pen_y + sdy, 0, s_size - 1)
 
         # Per the semantic above, the pen_state ON THIS STROKE determines
         # whether THIS movement leaves ink.
         if s.pen == PEN_DOWN:
-            draw.line([(pen_x, pen_y), (new_x, new_y)], fill=INK_COLOR, width=line_width)
+            draw.line([(pen_x, pen_y), (new_x, new_y)], fill=INK_COLOR, width=s_line)
 
         pen_x, pen_y = new_x, new_y
 
