@@ -1,0 +1,48 @@
+# Model weights & training outputs
+checkpoints/
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.bin
+
+# Large media (kept locally but not committed)
+artefacts/per_probe/*/mp4/
+artefacts/trajectory_morphs/
+
+# Raw datasets (live on GCP)
+data/
+*.ndjson
+*.tar
+*.tar.gz
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+.python-version
+
+# Training infra
+wandb/
+runs/
+*.log
+lightning_logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Cache
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
