@@ -1,0 +1,212 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Visual NLA — L16</title>
+<style>
+body { font-family: -apple-system, sans-serif; max-width: 1200px; margin: 2em auto; padding: 0 1em; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1em; }
+.cell { border: 1px solid #ddd; padding: 0.5em; border-radius: 8px; }
+.cell img, .cell video { width: 100%; height: auto; background: #fff; border: 1px solid #eee; }
+.prompt { font-size: 13px; color: #444; margin-top: 0.5em; }
+.cat { display: inline-block; padding: 2px 6px; background: #eef; border-radius: 4px; font-size: 11px; color: #557; }
+</style></head><body>
+<h1>Visual NLA — Layer 16</h1>
+<p>50 probes. Each shows a PNG of the final drawing (left) and the animated emergence (right).</p>
+<div class='grid'><div class='cell'>
+<img src='png/factual_paris.png' alt='factual_paris'>
+<video src='mp4/factual_paris.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>factual</span> The capital of France is</div>
+</div><div class='cell'>
+<img src='png/factual_hamlet.png' alt='factual_hamlet'>
+<video src='mp4/factual_hamlet.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>factual</span> The author of Hamlet is</div>
+</div><div class='cell'>
+<img src='png/factual_water.png' alt='factual_water'>
+<video src='mp4/factual_water.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>factual</span> The chemical formula for water is</div>
+</div><div class='cell'>
+<img src='png/factual_speed_of_light.png' alt='factual_speed_of_light'>
+<video src='mp4/factual_speed_of_light.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>factual</span> The speed of light in vacuum is</div>
+</div><div class='cell'>
+<img src='png/factual_smallest_prime.png' alt='factual_smallest_prime'>
+<video src='mp4/factual_smallest_prime.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>factual</span> The smallest prime number is</div>
+</div><div class='cell'>
+<img src='png/math_47_plus_38.png' alt='math_47_plus_38'>
+<video src='mp4/math_47_plus_38.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>arithmetic</span> What is 47 + 38? The answer is</div>
+</div><div class='cell'>
+<img src='png/math_12_times_13.png' alt='math_12_times_13'>
+<video src='mp4/math_12_times_13.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>arithmetic</span> What is 12 × 13? The answer is</div>
+</div><div class='cell'>
+<img src='png/math_sqrt_64.png' alt='math_sqrt_64'>
+<video src='mp4/math_sqrt_64.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>arithmetic</span> What is the square root of 64? It is</div>
+</div><div class='cell'>
+<img src='png/math_pi.png' alt='math_pi'>
+<video src='mp4/math_pi.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>arithmetic</span> Pi to two decimal places is</div>
+</div><div class='cell'>
+<img src='png/math_triangle_sides.png' alt='math_triangle_sides'>
+<video src='mp4/math_triangle_sides.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>arithmetic</span> A triangle has how many sides? It has</div>
+</div><div class='cell'>
+<img src='png/multihop_obama_wife.png' alt='multihop_obama_wife'>
+<video src='mp4/multihop_obama_wife.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>multihop</span> Barack Obama's wife's name is</div>
+</div><div class='cell'>
+<img src='png/multihop_obama_wife_mother.png' alt='multihop_obama_wife_mother'>
+<video src='mp4/multihop_obama_wife_mother.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>multihop</span> The mother of Barack Obama's wife is named</div>
+</div><div class='cell'>
+<img src='png/multihop_capital_of_country_with_eiffel.png' alt='multihop_capital_of_country_with_eiffel'>
+<video src='mp4/multihop_capital_of_country_with_eiffel.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>multihop</span> The capital of the country that contains the Eiffel Tower is</div>
+</div><div class='cell'>
+<img src='png/multihop_continent_of_china.png' alt='multihop_continent_of_china'>
+<video src='mp4/multihop_continent_of_china.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>multihop</span> China is located in the continent of</div>
+</div><div class='cell'>
+<img src='png/multihop_president_country_eiffel.png' alt='multihop_president_country_eiffel'>
+<video src='mp4/multihop_president_country_eiffel.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>multihop</span> The current president of the country that contains the Eiffel Tower is named</div>
+</div><div class='cell'>
+<img src='png/emotion_funeral.png' alt='emotion_funeral'>
+<video src='mp4/emotion_funeral.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>emotional</span> The funeral was somber and</div>
+</div><div class='cell'>
+<img src='png/emotion_joy.png' alt='emotion_joy'>
+<video src='mp4/emotion_joy.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>emotional</span> Her face lit up with joy when she heard the</div>
+</div><div class='cell'>
+<img src='png/emotion_fear.png' alt='emotion_fear'>
+<video src='mp4/emotion_fear.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>emotional</span> His heart pounded with fear as the</div>
+</div><div class='cell'>
+<img src='png/emotion_calm.png' alt='emotion_calm'>
+<video src='mp4/emotion_calm.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>emotional</span> The lake was calm and</div>
+</div><div class='cell'>
+<img src='png/emotion_letter.png' alt='emotion_letter'>
+<video src='mp4/emotion_letter.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>emotional</span> She received the news and felt deeply</div>
+</div><div class='cell'>
+<img src='png/ambig_telescope.png' alt='ambig_telescope'>
+<video src='mp4/ambig_telescope.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>ambiguous</span> I saw the man with the telescope</div>
+</div><div class='cell'>
+<img src='png/ambig_visiting_relatives.png' alt='ambig_visiting_relatives'>
+<video src='mp4/ambig_visiting_relatives.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>ambiguous</span> Visiting relatives can be boring</div>
+</div><div class='cell'>
+<img src='png/ambig_bank.png' alt='ambig_bank'>
+<video src='mp4/ambig_bank.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>ambiguous</span> She went to the bank to deposit</div>
+</div><div class='cell'>
+<img src='png/list_primary_colours.png' alt='list_primary_colours'>
+<video src='mp4/list_primary_colours.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>list</span> The three primary colours are</div>
+</div><div class='cell'>
+<img src='png/list_seasons.png' alt='list_seasons'>
+<video src='mp4/list_seasons.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>list</span> The four seasons of the year are</div>
+</div><div class='cell'>
+<img src='png/list_planets.png' alt='list_planets'>
+<video src='mp4/list_planets.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>list</span> The planets in our solar system are</div>
+</div><div class='cell'>
+<img src='png/list_continents.png' alt='list_continents'>
+<video src='mp4/list_continents.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>list</span> There are seven continents:</div>
+</div><div class='cell'>
+<img src='png/neg_paris.png' alt='neg_paris'>
+<video src='mp4/neg_paris.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>negation</span> Paris is not the capital of</div>
+</div><div class='cell'>
+<img src='png/neg_water_solid.png' alt='neg_water_solid'>
+<video src='mp4/neg_water_solid.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>negation</span> Water is not in solid form when it</div>
+</div><div class='cell'>
+<img src='png/code_fib.png' alt='code_fib'>
+<video src='mp4/code_fib.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>code</span> def fibonacci(n):</div>
+</div><div class='cell'>
+<img src='png/code_sql.png' alt='code_sql'>
+<video src='mp4/code_sql.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>code</span> SELECT * FROM users WHERE</div>
+</div><div class='cell'>
+<img src='png/code_main.png' alt='code_main'>
+<video src='mp4/code_main.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>code</span> if __name__ == '__main__':</div>
+</div><div class='cell'>
+<img src='png/code_print_hello.png' alt='code_print_hello'>
+<video src='mp4/code_print_hello.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>code</span> print('Hello,</div>
+</div><div class='cell'>
+<img src='png/narrative_once.png' alt='narrative_once'>
+<video src='mp4/narrative_once.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>narrative</span> Once upon a time, in a kingdom far away,</div>
+</div><div class='cell'>
+<img src='png/narrative_storm.png' alt='narrative_storm'>
+<video src='mp4/narrative_storm.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>narrative</span> When the storm hit, the village</div>
+</div><div class='cell'>
+<img src='png/narrative_letter.png' alt='narrative_letter'>
+<video src='mp4/narrative_letter.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>narrative</span> When she opened the box, she found</div>
+</div><div class='cell'>
+<img src='png/concept_cat.png' alt='concept_cat'>
+<video src='mp4/concept_cat.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>concept</span> I am thinking about a cat.</div>
+</div><div class='cell'>
+<img src='png/concept_house.png' alt='concept_house'>
+<video src='mp4/concept_house.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>concept</span> I am picturing a small house with a red roof.</div>
+</div><div class='cell'>
+<img src='png/concept_geometry.png' alt='concept_geometry'>
+<video src='mp4/concept_geometry.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>concept</span> Imagine an equilateral triangle inscribed in a circle.</div>
+</div><div class='cell'>
+<img src='png/concept_emotion.png' alt='concept_emotion'>
+<video src='mp4/concept_emotion.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>concept</span> I am thinking about deep sadness.</div>
+</div><div class='cell'>
+<img src='png/concept_motion.png' alt='concept_motion'>
+<video src='mp4/concept_motion.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>concept</span> I am picturing a bird flying across the sky.</div>
+</div><div class='cell'>
+<img src='png/concept_face.png' alt='concept_face'>
+<video src='mp4/concept_face.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>concept</span> I am picturing a smiling face.</div>
+</div><div class='cell'>
+<img src='png/concept_diagram.png' alt='concept_diagram'>
+<video src='mp4/concept_diagram.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>concept</span> I'm drawing a flowchart with three boxes connected by arrows.</div>
+</div><div class='cell'>
+<img src='png/poly_bark.png' alt='poly_bark'>
+<video src='mp4/poly_bark.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>polysemy</span> The bark of the tree was rough, and</div>
+</div><div class='cell'>
+<img src='png/poly_bank2.png' alt='poly_bank2'>
+<video src='mp4/poly_bank2.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>polysemy</span> The river bank was muddy after the rain.</div>
+</div><div class='cell'>
+<img src='png/poly_left.png' alt='poly_left'>
+<video src='mp4/poly_left.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>polysemy</span> After she left, the room felt</div>
+</div><div class='cell'>
+<img src='png/comp_taller.png' alt='comp_taller'>
+<video src='mp4/comp_taller.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>comparative</span> An adult elephant is taller than a</div>
+</div><div class='cell'>
+<img src='png/comp_cold.png' alt='comp_cold'>
+<video src='mp4/comp_cold.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>comparative</span> Antarctica is colder than</div>
+</div><div class='cell'>
+<img src='png/meta_iam.png' alt='meta_iam'>
+<video src='mp4/meta_iam.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>meta</span> I am a language model trained to</div>
+</div><div class='cell'>
+<img src='png/meta_thinking.png' alt='meta_thinking'>
+<video src='mp4/meta_thinking.mp4' controls muted loop autoplay></video>
+<div class='prompt'><span class='cat'>meta</span> Right now I am thinking about</div>
+</div></div></body></html>
