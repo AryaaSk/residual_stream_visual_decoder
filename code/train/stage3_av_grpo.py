@@ -181,7 +181,7 @@ def main():
                         help="Number of distinct activations per step (effective rollouts = micro_batch * group_size)")
     parser.add_argument("--lr", type=float, default=5e-5)
     parser.add_argument("--kl-beta", type=float, default=0.05)
-    parser.add_argument("--alpha", type=float, default=1.0)
+    parser.add_argument("--alpha", type=float, default=0.5)  # tuned via alpha_sweep on Stage-1 AV at L16
     parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--max-tokens", type=int, default=120)
     parser.add_argument("--log-every", type=int, default=5)

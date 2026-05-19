@@ -100,7 +100,7 @@ def main():
     parser.add_argument("--out-dir", type=Path, default=Path("artefacts/per_probe"))
     parser.add_argument("--probe-set", type=Path, default=None,
                         help="Optional JSON file with probe set; if absent, uses built-in DEFAULT_PROBE_SET")
-    parser.add_argument("--alpha", type=float, default=1.0)
+    parser.add_argument("--alpha", type=float, default=0.5)  # tuned via alpha_sweep on Stage-1 AV at L16
     parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--max-tokens", type=int, default=600)
     parser.add_argument("--canvas-size", type=int, default=224)

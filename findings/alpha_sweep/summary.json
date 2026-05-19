@@ -1,0 +1,352 @@
+[
+  {
+    "alpha": 0.05,
+    "mean_strokes": 18.5,
+    "variance_strokes": 288.9166666666667,
+    "mean_malformation_ratio": 0.5467914438502673,
+    "rows": [
+      {
+        "slug": "capital_france",
+        "text": "The capital of France is",
+        "strokes": 1,
+        "tokens": 300,
+        "malformed": 296
+      },
+      {
+        "slug": "dog",
+        "text": "I am thinking about a dog.",
+        "strokes": 36,
+        "tokens": 137,
+        "malformed": 28
+      },
+      {
+        "slug": "triangle",
+        "text": "Imagine a triangle inscribed in a circle.",
+        "strokes": 7,
+        "tokens": 56,
+        "malformed": 34
+      },
+      {
+        "slug": "storm",
+        "text": "When the storm hit, the village",
+        "strokes": 14,
+        "tokens": 60,
+        "malformed": 17
+      },
+      {
+        "slug": "paris",
+        "text": "Paris, the city of lights, is famous for the Eiffel",
+        "strokes": 6,
+        "tokens": 33,
+        "malformed": 14
+      },
+      {
+        "slug": "math",
+        "text": "What is 47 + 38? The answer is",
+        "strokes": 47,
+        "tokens": 162,
+        "malformed": 20
+      }
+    ]
+  },
+  {
+    "alpha": 0.1,
+    "mean_strokes": 18.833333333333332,
+    "variance_strokes": 181.13888888888889,
+    "mean_malformation_ratio": 0.467175572519084,
+    "rows": [
+      {
+        "slug": "capital_france",
+        "text": "The capital of France is",
+        "strokes": 16,
+        "tokens": 84,
+        "malformed": 35
+      },
+      {
+        "slug": "dog",
+        "text": "I am thinking about a dog.",
+        "strokes": 15,
+        "tokens": 71,
+        "malformed": 24
+      },
+      {
+        "slug": "triangle",
+        "text": "Imagine a triangle inscribed in a circle.",
+        "strokes": 1,
+        "tokens": 159,
+        "malformed": 155
+      },
+      {
+        "slug": "storm",
+        "text": "When the storm hit, the village",
+        "strokes": 43,
+        "tokens": 181,
+        "malformed": 51
+      },
+      {
+        "slug": "paris",
+        "text": "Paris, the city of lights, is famous for the Eiffel",
+        "strokes": 10,
+        "tokens": 53,
+        "malformed": 19
+      },
+      {
+        "slug": "math",
+        "text": "What is 47 + 38? The answer is",
+        "strokes": 28,
+        "tokens": 107,
+        "malformed": 22
+      }
+    ]
+  },
+  {
+    "alpha": 0.2,
+    "mean_strokes": 28.5,
+    "variance_strokes": 316.5833333333333,
+    "mean_malformation_ratio": 0.5846030473135525,
+    "rows": [
+      {
+        "slug": "capital_france",
+        "text": "The capital of France is",
+        "strokes": 33,
+        "tokens": 118,
+        "malformed": 18
+      },
+      {
+        "slug": "dog",
+        "text": "I am thinking about a dog.",
+        "strokes": 55,
+        "tokens": 247,
+        "malformed": 81
+      },
+      {
+        "slug": "triangle",
+        "text": "Imagine a triangle inscribed in a circle.",
+        "strokes": 7,
+        "tokens": 300,
+        "malformed": 278
+      },
+      {
+        "slug": "storm",
+        "text": "When the storm hit, the village",
+        "strokes": 37,
+        "tokens": 143,
+        "malformed": 31
+      },
+      {
+        "slug": "paris",
+        "text": "Paris, the city of lights, is famous for the Eiffel",
+        "strokes": 4,
+        "tokens": 300,
+        "malformed": 288
+      },
+      {
+        "slug": "math",
+        "text": "What is 47 + 38? The answer is",
+        "strokes": 35,
+        "tokens": 139,
+        "malformed": 33
+      }
+    ]
+  },
+  {
+    "alpha": 0.5,
+    "mean_strokes": 47.166666666666664,
+    "variance_strokes": 595.8055555555555,
+    "mean_malformation_ratio": 0.2037037037037037,
+    "rows": [
+      {
+        "slug": "capital_france",
+        "text": "The capital of France is",
+        "strokes": 72,
+        "tokens": 271,
+        "malformed": 50
+      },
+      {
+        "slug": "dog",
+        "text": "I am thinking about a dog.",
+        "strokes": 32,
+        "tokens": 117,
+        "malformed": 20
+      },
+      {
+        "slug": "triangle",
+        "text": "Imagine a triangle inscribed in a circle.",
+        "strokes": 0,
+        "tokens": 47,
+        "malformed": 45
+      },
+      {
+        "slug": "storm",
+        "text": "When the storm hit, the village",
+        "strokes": 55,
+        "tokens": 197,
+        "malformed": 31
+      },
+      {
+        "slug": "paris",
+        "text": "Paris, the city of lights, is famous for the Eiffel",
+        "strokes": 61,
+        "tokens": 228,
+        "malformed": 44
+      },
+      {
+        "slug": "math",
+        "text": "What is 47 + 38? The answer is",
+        "strokes": 63,
+        "tokens": 220,
+        "malformed": 30
+      }
+    ]
+  },
+  {
+    "alpha": 1.0,
+    "mean_strokes": 17.666666666666668,
+    "variance_strokes": 147.88888888888889,
+    "mean_malformation_ratio": 0.5939849624060151,
+    "rows": [
+      {
+        "slug": "capital_france",
+        "text": "The capital of France is",
+        "strokes": 36,
+        "tokens": 148,
+        "malformed": 39
+      },
+      {
+        "slug": "dog",
+        "text": "I am thinking about a dog.",
+        "strokes": 19,
+        "tokens": 106,
+        "malformed": 48
+      },
+      {
+        "slug": "triangle",
+        "text": "Imagine a triangle inscribed in a circle.",
+        "strokes": 27,
+        "tokens": 98,
+        "malformed": 16
+      },
+      {
+        "slug": "storm",
+        "text": "When the storm hit, the village",
+        "strokes": 3,
+        "tokens": 261,
+        "malformed": 251
+      },
+      {
+        "slug": "paris",
+        "text": "Paris, the city of lights, is famous for the Eiffel",
+        "strokes": 2,
+        "tokens": 104,
+        "malformed": 97
+      },
+      {
+        "slug": "math",
+        "text": "What is 47 + 38? The answer is",
+        "strokes": 19,
+        "tokens": 81,
+        "malformed": 23
+      }
+    ]
+  },
+  {
+    "alpha": 2.0,
+    "mean_strokes": 36.333333333333336,
+    "variance_strokes": 467.88888888888886,
+    "mean_malformation_ratio": 0.2689352360043908,
+    "rows": [
+      {
+        "slug": "capital_france",
+        "text": "The capital of France is",
+        "strokes": 75,
+        "tokens": 278,
+        "malformed": 46
+      },
+      {
+        "slug": "dog",
+        "text": "I am thinking about a dog.",
+        "strokes": 39,
+        "tokens": 138,
+        "malformed": 20
+      },
+      {
+        "slug": "triangle",
+        "text": "Imagine a triangle inscribed in a circle.",
+        "strokes": 15,
+        "tokens": 89,
+        "malformed": 43
+      },
+      {
+        "slug": "storm",
+        "text": "When the storm hit, the village",
+        "strokes": 43,
+        "tokens": 161,
+        "malformed": 31
+      },
+      {
+        "slug": "paris",
+        "text": "Paris, the city of lights, is famous for the Eiffel",
+        "strokes": 8,
+        "tokens": 57,
+        "malformed": 32
+      },
+      {
+        "slug": "math",
+        "text": "What is 47 + 38? The answer is",
+        "strokes": 38,
+        "tokens": 188,
+        "malformed": 73
+      }
+    ]
+  },
+  {
+    "alpha": 5.0,
+    "mean_strokes": 17.833333333333332,
+    "variance_strokes": 141.4722222222222,
+    "mean_malformation_ratio": 0.568988173455979,
+    "rows": [
+      {
+        "slug": "capital_france",
+        "text": "The capital of France is",
+        "strokes": 24,
+        "tokens": 88,
+        "malformed": 15
+      },
+      {
+        "slug": "dog",
+        "text": "I am thinking about a dog.",
+        "strokes": 37,
+        "tokens": 148,
+        "malformed": 36
+      },
+      {
+        "slug": "triangle",
+        "text": "Imagine a triangle inscribed in a circle.",
+        "strokes": 14,
+        "tokens": 93,
+        "malformed": 49
+      },
+      {
+        "slug": "storm",
+        "text": "When the storm hit, the village",
+        "strokes": 24,
+        "tokens": 105,
+        "malformed": 31
+      },
+      {
+        "slug": "paris",
+        "text": "Paris, the city of lights, is famous for the Eiffel",
+        "strokes": 2,
+        "tokens": 27,
+        "malformed": 20
+      },
+      {
+        "slug": "math",
+        "text": "What is 47 + 38? The answer is",
+        "strokes": 6,
+        "tokens": 300,
+        "malformed": 282
+      }
+    ]
+  }
+]

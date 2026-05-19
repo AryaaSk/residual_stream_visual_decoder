@@ -37,7 +37,7 @@ def main():
     parser.add_argument("--av-ckpt", type=Path, required=True)
     parser.add_argument("--model-id", default="google/gemma-4-e2b-it")
     parser.add_argument("--layer", type=int, default=16)
-    parser.add_argument("--alpha", type=float, default=1.0)
+    parser.add_argument("--alpha", type=float, default=0.5)  # tuned via alpha_sweep on Stage-1 AV at L16
     parser.add_argument("--out-dir", type=Path, default=Path("findings/inject_demo"))
     parser.add_argument("--max-tokens", type=int, default=300)
     parser.add_argument("--temperature", type=float, default=1.0)

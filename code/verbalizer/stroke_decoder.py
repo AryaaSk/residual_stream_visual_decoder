@@ -30,6 +30,13 @@ from stroke_tokenizer import ACT_TOKEN, DRAW_CLOSE, DRAW_OPEN, PEN_END, StrokeVo
 SFT_PROMPT_TEMPLATE = "Draw: {caption} <DRAW>"
 INJECT_PROMPT_TEMPLATE = "Visualize the following thought from layer {layer}: {act} <DRAW>"
 
+# Default injection scale (alpha). Tuned via alpha_sweep on Stage-1 AV at L16:
+# at alpha=0.5 the malformation rate dropped from 59% (alpha=1.0) to 20%, and
+# drawings became visibly richer and more structured. Activation norm at L16 is
+# ~70; alpha=0.5 → injected magnitude ~35, much closer to Gemma 4's typical
+# embedding norm (~10-20). See findings/alpha_sweep/.
+DEFAULT_ALPHA = 0.5
+
 
 @dataclass
 class StrokeDecoder:
@@ -139,7 +146,7 @@ class StrokeDecoder:
         activation: torch.Tensor,
         layer_ell: int,
         *,
-        alpha: float = 1.0,
+        alpha: float = DEFAULT_ALPHA,
         max_new_tokens: int = 600,
         temperature: float = 1.0,
         top_k: int = 0,
