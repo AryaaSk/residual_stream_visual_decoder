@@ -116,6 +116,18 @@ Lay them out side by side. The visual NLA's value-add is most visible when:
 
 **Important context for the "letter writing" row:** the AR's backbone is full pretrained Gemma 4 E2B (with its vision encoder). Gemma 4 was pretrained on internet-scale image-text data including OCR-rich material, so it can read text in images. If AV writes `cat` in strokes, the AR's vision encoder will represent the image similarly to how it represents the word "cat" from text, and reconstruction succeeds. The β coefficient in the KL penalty is the knob that arbitrates between "sketch the concept" (β large → AV pulled toward QuickDraw prior) and "write the concept" (β small → AV free to discover letter-writing as the highest-bandwidth encoding).
 
+## Known open issues to fix in Phase A (recorded 2026-05-19)
+
+Found while running Day-1 + early Day-2. These are the binding constraints we need to fix before the recipe will give high-FVE results:
+
+1. **Alpha (injection scale) is untuned.** Activation norm at L16 ≈ 70; typical Gemma 4 embedding norm ≈ 10. We inject 7× the expected magnitude, which likely saturates downstream layers. Fix: sweep α, then make it a learned scalar.
+2. **AR is severely undertrained.** Stage 2 saw ~400 (drawing, h) pairs total. The Linear(d,d) head is barely off identity init. Fix: 2000-5000 step Stage 2 with batch 8.
+3. **AR's training data has bad semantics.** Stage 2 used drawings generated from arbitrary text snippets ("The capital of France is"), which the AV depicts as random scribbles. AR therefore learned "random scribble → random activation", not "concept-depicting drawing → concept activation". Fix: regenerate Stage-2 training data using QuickDraw-style captions where the drawing actually depicts something coherent.
+4. **GRPO step count is ~1% of NLA's.** They ran ~10k steps; we ran 100. Fix: 1000-2000 steps with group 8 and EMA-baseline-subtracted advantage.
+5. **Cross-modal alignment may be weak.** Day-0 showed raw cosine delta ≈ 0.001. The AR's Linear(d,d) is responsible for bridging cross-modal gaps that raw cosine couldn't see. If this fails, fix with brief vision-encoder fine-tune on QuickDraw-style line art.
+
+These five items are scheduled as Phase A in `07-execution-plan.md`. We pivoted from "spread to 8 layers" to "make L16 actually work first" once we realised the recipe issues dominate the layer-choice question.
+
 ## Stop criteria
 
 - **Day-0 fails:** abort, pivot to text-only NLA experiment or rethink alignment assumption.

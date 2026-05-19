@@ -233,11 +233,17 @@ Three Gemma 4 E2B instances: **TARGET** (frozen, source of `h_ℓ`), **AV** (voc
 
 ## Anchor layer strategy
 
-**Target: 8 anchor layers**, evenly spaced. Default candidate set for E2B (~26 layers): `{3, 6, 10, 13, 16, 19, 22, 26}`.
+**REVISED 2026-05-19 (mid-session pivot):** make ONE layer (L16) work really well first, replicate later.
 
-**Day-0 ROI ranking overrides the default**: if early layers show no cross-modal alignment (likely), drop them and redistribute density to mid-late layers where alignment exists.
+Original plan was 8 anchor layers in parallel. After Day-1 + early Day-2 we learned that the binding constraints are not "which layer" but rather a stack of training-recipe issues (alpha tuning, AR undertraining, AR's bad training distribution, RL step count, cross-modal alignment). Spending compute spreading across 8 layers before fixing the recipe wastes most of it.
 
-**Training order is ROI rank order**: highest-ROI layer first, so we have a working artefact as early as possible.
+**New roadmap:**
+
+1. **Phase A — get L16 to FVE ≥ 0.3 with recognisable per-activation drawings.** All compute on this single layer until the recipe demonstrably works. Iterate on the open-issues list below.
+2. **Phase B — replicate to 2 additional layers** (one early like L8, one late like L24) using the locked-in recipe. Confirms the recipe is layer-agnostic.
+3. **Phase C — only if A+B succeed**: roll out the remaining 5 layers using the same recipe.
+
+For a 35-layer Gemma 4 E2B, the eventual full sweep is `{3, 8, 12, 16, 20, 24, 29, 34}` (0-indexed). But that's a Phase C decision, not committed now.
 
 ---
 
@@ -367,80 +373,79 @@ END OF DAY 1 — DELIVERABLE
 
 ---
 
-## DAYS 2-7 — Rolling completion
+## DAYS 2-7 — Quality-first roadmap (REVISED mid-session)
 
-### Day 2 (2026-05-20)
+### Phase A: get L16 to genuinely work (Days 2-5)
 
-**Goal:** start 3 more anchor layers + kick off text-NLA baseline.
+We do NOT spread to other layers until the recipe is proven on L16. Issues to address (in priority order):
 
-```
-MORNING
-  Confirm Day 1 results visible in artefacts/. Brief retro in research_log/2026-05-20-day2.md.
-  
-  REMOTE: kick off Stage 1 (AV SFT) for next 3 highest-ROI anchor layers in parallel.
-          Each takes ~2 hours wall clock, on 2 GPUs we serialise → ~6 hours total.
-          Alternative: train all 3 sequentially with FSDP using both GPUs each → also ~6 hours but cleaner.
+#### A1. Tune alpha (injection scale) — Day 2 morning, ~2 hours
+**Problem:** activation norm at L16 is ~70; typical Gemma 4 embedding norm is ~10. We're injecting a 7× larger magnitude than the model is used to. Downstream layers likely saturate or behave abnormally. NLA learned this as a parameter; we hand-set it to 1.0.
+**Action:** sweep α ∈ {0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0}. For each, run inject_demo on the 6 demo prompts and look at:
+  - Stroke count consistency (does AV emit reasonable-length sequences?)
+  - Visual coherence (does the drawing look stroke-like, not gibberish?)
+  - Variance across prompts (do different activations produce different drawings?)
+**Then:** consider making α a *learned scalar parameter* (single float, trained jointly with AV embedding rows). Effectively zero compute cost, easy win.
+**Script:** `code/eval/alpha_sweep.py` (to write).
 
-AFTERNOON
-  REMOTE: launch text-NLA baseline at mid-stack layer (e.g., L16). Same Stage 1 SFT (text output, no vocab extension).
-          This is cheap relative to visual (no new vocab to learn), maybe 1 hour.
-  
-  REMOTE: as Stage 1 completes for each of the 3 new layers, immediately kick off Stage 2 (AR supervised).
+#### A2. Re-train AR with much more data and better data — Day 2-3
+**Problem:** Stage 2 trained AR for only 200 steps × batch 2 = 400 (drawing, h) pairs. Linear(d,d) is mostly at identity init. The drawings AR saw were generated from arbitrary text snippets ("The capital of France is" etc.) — those don't have clean concept content for the AV-Stage-1 prior to depict.
+**Action:**
+  - **(a) Use QuickDraw-style captions for AR training data.** Generate the Stage-2 drawings using captions from the SFT corpus, NOT from arbitrary text snippets. Then h_target should come from running Gemma 4 on the SAME caption ("I am drawing a cat" → cat-shaped drawing + cat-activation). This gives AR clean (concept-drawing, concept-activation) pairs.
+  - **(b) Train for 2000-5000 steps with batch 8.** Roughly 10-25× current AR training data. AR finally learns a real mapping rather than identity-plus-noise.
+  - **(c) Optionally swap Linear(d,d) → 2-layer MLP (1536 → 3072 → 1536) for more capacity.** Cheap test.
+**Wall clock budget:** ~4-6 hours on 1× H200.
 
-EVENING
-  Begin Stage 3 (AV GRPO) for the 3 new layers + text-NLA. Will run overnight + into Day 3.
-  
-  LOCAL: write code/eval/comparison_grid.py — generates per-probe per-layer 4-column grids (logit / tuned / text-NLA / visual-NLA).
-  
-  Commit + push. Research log. Tag `day2-complete`.
-```
+#### A3. Longer GRPO with proper baseline — Day 3-4
+**Problem:** Day-1 Stage 3 ran 100 steps with group_size 4. NLA reports ~10k steps with group 8. Even if the architecture is right, RL convergence takes more.
+**Action:**
+  - 1000-2000 GRPO steps
+  - group_size 8 (variance reduction)
+  - Add a running baseline (EMA of mean reward) subtracted from rewards before computing advantage — reduces policy-gradient variance
+  - Save checkpoints every 100 steps, evaluate FVE on held-out every 250
+**Wall clock budget:** ~6-10 hours on 1× H200 (longer than current per-step because of group 8).
 
-### Day 3 (2026-05-21) — **KEY EXPIRY DAY**
+#### A4. Cross-modal alignment fix — Day 4 (only if FVE still low)
+**Problem:** Day-0 showed delta ≈ 0.001 on raw cosine. The whole pipeline bets that AR's Linear(d,d) can find cross-modal alignment that raw cosine missed. Empirically open.
+**Mitigation if FVE plateaus low:**
+  - Brief vision-encoder fine-tune on QuickDraw line art (~1 hour) — bring rendered drawings on-manifold for Gemma 4's vision encoder
+  - Try AR with the full vision encoder + first ℓ layers ALL fine-tuned (LoRA on AR, not just Linear) — but PEFT 0.13 doesn't support Gemma4ClippableLinear so this needs custom plumbing
+**Wall clock budget:** ~2-4 hours.
 
-**Critical: key expires 08:16 UTC.** If renewal hasn't happened, we lose remote access at that hour.
+#### A5. Eval — Day 5 morning
+- Re-run inject_demo + compare_av with the locked-in recipe
+- Render 50-probe sweep
+- Compute FVE on a fresh 500-sample held-out set
+- **Gate:** if FVE ≥ 0.3 and drawings have visible per-prompt variation, proceed to Phase B. If not, iterate A1-A4 once more.
 
-```
-PRE-EXPIRY (before 08:16 UTC)
-  REMOTE: pull EVERYTHING that's been trained so far (all checkpoints, all runs, all logs).
-  Confirm everything is in GitHub.
+### Phase B: Replicate to 2 more layers (Day 5-6)
 
-POST-EXPIRY OPTIONS
-  Option A: Key renewed → continue as planned.
-  Option B: Key not renewed → continue Days 3-7 work LOCAL ONLY:
-    - Process artefacts we already pulled
-    - Build comparison grids, hero probes, trajectory morph videos
-    - Writeup
-    - Visual NLA artefact is still publishable at the 4 layers we trained
-```
+Run the locked-in recipe (best α, best AR training schedule, best Stage-3 schedule) on:
+- **L8** (early-stack) — does the recipe work on layers with different residual statistics?
+- **L24** (late-stack) — does the recipe work on layers closer to the prediction head?
 
-**Assuming Plan A:** continue rolling out the remaining 4 anchor layers. Same pattern as Day 2 but in parallel with finalising the layers from Day 2.
+For each:
+- Stage 1 AV SFT: same as L16 (~30 min, can probably reuse if AV body is shared)
+- Stage 2 AR supervised: ~4-6 hours each
+- Stage 3 GRPO: ~6-10 hours each
+- Per-layer eval: FVE + inject_demo + compare_av
 
-### Days 4-5
+If both replicate cleanly (FVE within 50% of L16's), the recipe is layer-agnostic enough to scale.
 
-Finish Stage 3 for all 8 visual anchor layers + text-NLA. Validate FVE across the layer sweep. Update `findings/fve_per_layer.json`.
+### Phase C: Full sweep (Day 7) — ONLY if A+B succeed
 
-### Day 6
+Roll out remaining 5 anchor layers (`{3, 12, 20, 29, 34}`). Same recipe. Build trajectory grids across the 8-layer sweep.
 
-Render the full 50-probe × 8-layer matrix:
-- 400 PNGs + 400 MP4s for visual NLA
-- 50 text outputs × 8 layers for text-NLA at L16 only (just 50 entries, since text-NLA is single-layer)
-- All in `artefacts/per_probe/`
+If we run out of time, ship Phase A+B (3 layers, well-trained) instead of Phase C (8 layers, mediocre). Quality over quantity.
 
-Build all comparison grids. Per probe, per layer: 4-column (logit / tuned / text-NLA / visual-NLA). Output to `artefacts/comparison_grids/`.
+### Day 7 final eval + writeup (always happens)
 
-Build trajectory-morph videos: per probe, one video that morphs through the 8 layers' drawings smoothly. Output to `artefacts/trajectory_morphs/`.
-
-### Day 7
-
-Cherry-pick 10 hero probes. High-fidelity render of each (higher canvas resolution, longer MP4s, anti-aliasing dialed up).
-
-Assemble 60-second hype reel: best 10-15 morph clips edited together with brief on-screen captions.
-
-Writeup: blog-post format. Sections: motivation → architecture → key result (the trajectory grid) → quantitative (FVE table) → qualitative analysis of probes → comparison with text-NLA → limitations and future work.
-
-GitHub release: tag `v0.1`. README updated with one-line install + one-line "generate a drawing for an arbitrary prompt" command.
-
-Tag commit `complete`.
+Regardless of how many layers we cover:
+- Comparison grids per probe (logit / tuned / text-NLA / visual-NLA per layer)
+- Cherry-pick 10 hero probes
+- 60-sec hype reel
+- Writeup: blog-post format, focus on the recipe + Phase-A insights
+- GitHub release: tag `v0.1`
 
 ---
 

@@ -240,3 +240,20 @@ Day-0 (1) + Stage 1 (4) + Stage 2 (4) + Stage 3 mini-run (12) + Stage 4 (1). Ful
 **Option A + 3-day budget on 2-4× H200** gets us the full layer-sweep visual artefact at meaningful (not best-in-class) FVE. That's the realistic publishable v1.
 
 **Option B is the contingency** if compute tightens.
+
+### REVISED 2026-05-19 (mid-session strategic pivot)
+
+After running Day-1 (Stage 1 SFT, inject_demo) and early Day-2 (Stage 2 + Stage 3 GRPO at small scale), we discovered the binding constraints are NOT "which layer" but a stack of training-recipe issues:
+1. Alpha (injection scale) untuned
+2. AR severely undertrained (Stage 2 saw ~400 (drawing, h) pairs total)
+3. AR's training data has bad semantics (drawings from arbitrary text → random scribbles)
+4. GRPO step count is ~1% of NLA's
+5. Cross-modal alignment may be weak (Day-0 raw cosine ≈ 0)
+
+Spreading compute across 8 layers before fixing the recipe wastes most of it. **New roadmap (see `07-execution-plan.md` Phase A/B/C):**
+
+- **Phase A:** make L16 genuinely work (FVE ≥ 0.3, visible per-activation variation). Fix all 5 issues. Iterate.
+- **Phase B:** replicate the locked-in recipe on L8 + L24 to validate layer-agnosticism.
+- **Phase C:** only if A+B succeed, roll out the remaining 5 anchor layers.
+
+**Recipe lock-in is the gate** between phases. Quality > quantity.
