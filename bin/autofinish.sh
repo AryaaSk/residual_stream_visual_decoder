@@ -47,7 +47,9 @@ while true; do
 done
 
 # Phase 1 — inject_demo for each layer with the BEST iter checkpoint
-heading "PHASE 1: inject_demo per layer"
+# Includes alpha sweep on the hero subset so we have material to choose from
+# even if alpha=0.5 produces weak visuals at this layer.
+heading "PHASE 1: inject_demo per layer (26 prompts main pass + alpha sweep on 6 hero)"
 for LAYER_DIR in checkpoints/v1_1/L12 checkpoints/v1_1/L24; do
     if [[ ! -d "$LAYER_DIR/final" ]]; then
         log "WARN: $LAYER_DIR/final missing, skipping inject_demo for that layer"
@@ -55,10 +57,11 @@ for LAYER_DIR in checkpoints/v1_1/L12 checkpoints/v1_1/L24; do
     fi
     LAYER=$(basename "$LAYER_DIR" | sed 's/^L//')
     OUT="findings/v1_1/inject_demo_L${LAYER}"
-    log "inject_demo L=$LAYER → $OUT"
+    log "inject_demo L=$LAYER → $OUT  (main α=0.5 + hero sweep α∈{0.3,0.7,1.0})"
     $VENV code/eval/inject_demo.py \
         --av-ckpt "$LAYER_DIR/final" --layer "$LAYER" \
         --alpha 0.5 --mp4 --out-dir "$OUT" \
+        --alpha-sweep 0.3 0.7 1.0 \
         2>&1 | tee -a "$LOG"
 done
 
@@ -129,15 +132,24 @@ else
     log "skip token_trajectory (L12 final missing)"
 fi
 
-# Phase 7 — hype reel from cross-layer videos
+# Phase 7 — hype reel: hero inject_demo clips + cross-layer + per-token
 heading "PHASE 7: 60-sec hype reel"
 mkdir -p artefacts/v1_1/reel_src
-# Put a mix of cross-layer and per-token MP4s into reel_src
+# Hero clips from each layer (alpha=0.5 main pass, not the _a0.30 sweep variants)
+for SLUG in dog cat eiffel capital_france triangle smile_face; do
+    for LAYER in 12 24; do
+        SRC="findings/v1_1/inject_demo_L${LAYER}/${SLUG}_4x.mp4"
+        DST="artefacts/v1_1/reel_src/hero_L${LAYER}_${SLUG}.mp4"
+        [[ -f "$SRC" ]] && cp "$SRC" "$DST"
+    done
+done
 cp artefacts/v1_1/cross_layer/*.mp4 artefacts/v1_1/reel_src/ 2>/dev/null || true
 cp artefacts/v1_1/trajectory_L12/*.mp4 artefacts/v1_1/reel_src/ 2>/dev/null || true
+log "reel_src contents:"
+ls artefacts/v1_1/reel_src/ | head -30 | tee -a "$LOG"
 $VENV code/eval/make_hype_reel.py \
     --in-dir artefacts/v1_1/reel_src --out artefacts/v1_1/demo.mp4 \
-    --max-clips 10 \
+    --max-clips 12 \
     2>&1 | tee -a "$LOG"
 
 # Phase 8 — write a top-level summary JSON for easy reading
