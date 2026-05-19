@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# Deploy helper for the residual_stream_visual_decoder project.
+# Wraps SSH + rsync to the H200 GCP instance, with our project's conventions:
+#   - local source lives in ./code/
+#   - remote workspace is ~/Aryaa/rsvd/
+#   - GPU 6 by default (set H200_GPU=6,7 for both, but 7 is usually busy)
+#   - PYTHONPATH includes our code/ dir
+#   - venv at ~/Aryaa/venv (transformers 5.8.1)
+#
+# Subcommands:
+#   sync          rsync ./code/ → remote ~/Aryaa/rsvd/code/
+#   run <script>  sync + run code/<script> in the remote venv with CUDA_VISIBLE_DEVICES
+#   ssh           open interactive SSH
+#   nvidia        nvidia-smi on remote
+#   pull <path>   rsync remote ~/Aryaa/rsvd/<path> → local ./<path>
+#   tmux <name>   attach to / create remote tmux session named <name>
+#   exec <cmd>    run an arbitrary shell command on remote inside our workspace
+#
+# Env:
+#   H200_GPU       (default "6")
+#   H200_PYTHON    (default ~/Aryaa/venv/bin/python3)
+#   H200_USER      (default theod)
+#   H200_HOST      (default 35.230.182.229)
+#   H200_KEY       (default ~/.ssh/gcp_zoral_h200_ed25519)
+
+set -euo pipefail
+
+H200_USER=${H200_USER:-theod}
+H200_HOST=${H200_HOST:-35.230.182.229}
+H200_KEY=${H200_KEY:-$HOME/.ssh/gcp_zoral_h200_ed25519}
+H200_GPU=${H200_GPU:-6}
+H200_PYTHON=${H200_PYTHON:-/home/theod/Aryaa/venv/bin/python3}
+REMOTE_DIR=/home/theod/Aryaa/rsvd
+
+SSH=(ssh -i "$H200_KEY" -o StrictHostKeyChecking=no "$H200_USER@$H200_HOST")
+SCP_TARGET="$H200_USER@$H200_HOST"
+PROJECT_DIR=$(cd "$(dirname "$0")/.." && pwd)
+
+cmd=${1:-help}
+shift || true
+
+case "$cmd" in
+  sync)
+    rsync -avz --delete \
+      -e "ssh -i $H200_KEY -o StrictHostKeyChecking=no" \
+      --exclude '__pycache__' --exclude '*.pyc' --exclude '.venv' \
+      "$PROJECT_DIR/code/" \
+      "$SCP_TARGET:$REMOTE_DIR/code/"
+    ;;
+
+  run)
+    script=${1:?usage: bin/h200 run <script.py> [args...]}
+    shift
+    "$0" sync
+    "${SSH[@]}" "cd $REMOTE_DIR && CUDA_VISIBLE_DEVICES=$H200_GPU PYTHONPATH=code $H200_PYTHON code/$script $*"
+    ;;
+
+  exec)
+    cmd_str=${1:?usage: bin/h200 exec '<command>'}
+    "${SSH[@]}" "cd $REMOTE_DIR && CUDA_VISIBLE_DEVICES=$H200_GPU PYTHONPATH=code $cmd_str"
+    ;;
+
+  ssh)
+    exec "${SSH[@]}" "cd $REMOTE_DIR && exec bash --login"
+    ;;
+
+  nvidia)
+    "${SSH[@]}" 'nvidia-smi --query-gpu=index,name,memory.used,memory.free,utilization.gpu --format=csv'
+    ;;
+
+  pull)
+    path=${1:?usage: bin/h200 pull <path>}
+    mkdir -p "$PROJECT_DIR/$(dirname "$path")"
+    rsync -avz \
+      -e "ssh -i $H200_KEY -o StrictHostKeyChecking=no" \
+      "$SCP_TARGET:$REMOTE_DIR/$path" \
+      "$PROJECT_DIR/$path"
+    ;;
+
+  tmux)
+    name=${1:-rsvd}
+    "${SSH[@]}" -t "tmux new-session -A -s $name 'cd $REMOTE_DIR && exec bash --login'"
+    ;;
+
+  bg)
+    # Run a command on remote in a detached tmux so it survives disconnect
+    name=${1:?usage: bin/h200 bg <session_name> <command>}
+    shift
+    cmd_str="$*"
+    "$0" sync
+    "${SSH[@]}" "tmux new-session -d -s $name 'cd $REMOTE_DIR && CUDA_VISIBLE_DEVICES=$H200_GPU PYTHONPATH=code $cmd_str |& tee runs/${name}.log'"
+    echo "Started tmux session '$name' on remote. Tail with: bin/h200 exec 'tail -f runs/${name}.log'"
+    ;;
+
+  help|*)
+    sed -n '/^# /p' "$0" | sed 's/^# \?//'
+    ;;
+esac
