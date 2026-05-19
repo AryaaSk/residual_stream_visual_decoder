@@ -93,23 +93,30 @@ Most mid-late layers (L15-L34) have pair-cosine ≥ 0.8 — activations live in 
 
 **Implication for FVE**: at L16, a "predict the mean" AR strategy already gets cosine ≈ 0.87 effortlessly. The bar for non-trivial FVE is much higher. At L12 (cosine 0.53) the mean-baseline is weaker; any per-prompt discrimination would show up.
 
-### 4. AR with frozen backbone + Linear/MLP head fundamentally cannot discriminate per prompt
+### 4. AR with frozen backbone + Linear/MLP head fundamentally cannot discriminate per prompt at inference
 
-Three FVE measurements, all returned FVE ≈ 0:
+Five FVE measurements, all returned FVE ≈ 0:
 
-| Variant | FVE | Cosine | Within-cluster cosine (baseline) |
-|---|---|---|---|
-| Linear AR L16 | -0.0066 | 0.887 | 0.870 |
-| MLP AR L16 | -0.0094 | 0.887 | 0.870 |
-| Linear AR L12 | -0.0036 | 0.579 | 0.532 |
+| Variant | Layer | Loss | FVE | Cosine | Comment |
+|---|---|---|---|---|---|
+| Linear AR v2 | L16 | MSE | -0.0066 | 0.887 | matches L16 cluster cosine 0.870 |
+| MLP AR v2 | L16 | MSE | -0.0094 | 0.887 | extra capacity doesn't help on L16 |
+| Linear AR v2 | L12 | MSE | -0.0036 | 0.579 | matches L12 cluster cosine 0.532 |
+| Linear AR v3 (mean-centered) | L12 | MSE on (h - h_mean) | -0.0066 | 0.579 | AR collapsed to zero output |
+| Linear AR v4 (contrastive) | L12 | InfoNCE | -0.0123 | -0.003 | trained successfully in-distribution but fails to generalise |
 
-The cosine **exactly matches** the within-cluster pair-cosine. AR is learning to predict the mean activation, not the per-prompt deviation.
+#### What each variant reveals:
 
-Final test: **mean-centered training** (Stage 2 v3) — subtract `h_mean` from targets before MSE, so AR is forced to predict the deviation, not the absolute activation. At inference, add `h_mean` back.
+- **v2 (MSE):** AR learns to predict the cluster mean → cosine matches within-cluster pair-cosine exactly. No per-prompt signal extracted.
+- **v3 (mean-centered MSE):** AR is asked to predict (h - h_mean) which has zero mean. Collapses to outputting zero (lowest MSE in centered space when no exploitable signal). Same effective ĥ = h_mean.
+- **v4 (contrastive InfoNCE):** Trained successfully on the QuickDraw training distribution — pos_cos 0.15 vs neg_cos 0.02 → real discrimination. But at inference on AV-generated drawings + text-thinking prompts, cosine collapses to 0. **AR overfits to its training distribution (real QuickDraw drawings + caption activations) and doesn't generalise to the inference distribution (AV-generated drawings + arbitrary text-thinking prompts).**
 
-Result: FVE = -0.0066, cosine = 0.579 (same as Linear L12). The AR collapsed to outputting zero, because that's the lowest-MSE prediction when there's no exploitable per-prompt signal in the gradient.
+#### Conclusion
 
-**Conclusion**: with the AR's Gemma 4 backbone *frozen* and only a Linear/MLP head trainable, per-prompt activation discrimination is fundamentally not achievable. There's not enough capacity above the vision encoder to discriminate concept-level information that matches the target's activation distribution at the per-prompt granularity.
+The bottleneck is **representational + distributional**:
+- Linear/MLP head over a frozen vision encoder has limited per-prompt discriminative capacity (MSE family)
+- When you force discrimination via contrastive loss, AR succeeds at distinguishing the training samples but the learned image features don't transfer to AV's drawing distribution
+- Fixing this needs **either** trainable backbone (LoRA on Gemma4ClippableLinear, custom plumbing) **or** training AR on the exact same drawings AV will produce at inference (joint AR + AV training, which is what NLA does)
 
 ### 5. Stage 3 GRPO with a frozen AR makes things worse, not better
 
