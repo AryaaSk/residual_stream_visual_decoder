@@ -60,10 +60,10 @@ class LogitLens:
         out = self.model(**enc, output_hidden_states=True, use_cache=False)
 
         results: list[LogitLensResult] = []
-        # Identify the final LayerNorm and the lm_head
-        # Gemma 4: model.model.norm + model.lm_head
+        # Gemma 4 module layout: model.model.language_model.norm + model.lm_head
         inner = self.model.model if hasattr(self.model, "model") else self.model
-        final_norm = inner.norm if hasattr(inner, "norm") else inner.final_layer_norm
+        lang = inner.language_model if hasattr(inner, "language_model") else inner
+        final_norm = lang.norm if hasattr(lang, "norm") else lang.final_layer_norm
         lm_head = self.model.lm_head if hasattr(self.model, "lm_head") else self.model.get_output_embeddings()
 
         for ell, h in enumerate(out.hidden_states):

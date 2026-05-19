@@ -69,8 +69,10 @@ def main():
             a.bias.zero_()
     optim = torch.optim.AdamW(adapters.parameters(), lr=args.lr)
 
+    # Gemma 4 module layout: model.model.language_model.{embed_tokens, layers, norm, ...}
     inner = model.model if hasattr(model, "model") else model
-    final_norm = inner.norm if hasattr(inner, "norm") else inner.final_layer_norm
+    lang = inner.language_model if hasattr(inner, "language_model") else inner
+    final_norm = lang.norm if hasattr(lang, "norm") else lang.final_layer_norm
     lm_head = model.lm_head if hasattr(model, "lm_head") else model.get_output_embeddings()
 
     texts = load_text_corpus(args.n_text)
