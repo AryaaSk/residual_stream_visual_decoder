@@ -80,6 +80,7 @@ def main():
     ar = TruncatedGemmaAR.from_pretrained(args.model_id, layer_ell=args.layer, device="cuda")
     head_v2 = args.ar_ckpt / "head.pt"
     head_v1 = args.ar_ckpt / "linear.pt"
+    h_mean_correction = None
     if head_v2.exists():
         ckpt = torch.load(head_v2, map_location="cuda", weights_only=False)
         head_type = ckpt.get("head_type", "linear")
@@ -87,7 +88,12 @@ def main():
             from train.stage2_v2_ar_supervised import MLP2Head
             ar.linear = MLP2Head(ar.hidden_size).cuda().to(next(ar.backbone.parameters()).dtype)
         ar.linear.load_state_dict(ckpt["linear"])
-        print(f"[fve] loaded AR v2 head_type={head_type}", flush=True)
+        if "h_mean" in ckpt:
+            # AR v3: was trained on centered targets, so we add the mean back at inference
+            h_mean_correction = ckpt["h_mean"].cuda()
+            print(f"[fve] loaded AR v3 (centered training); ||h_mean||={float(h_mean_correction.norm()):.2f}", flush=True)
+        else:
+            print(f"[fve] loaded AR v2 head_type={head_type}", flush=True)
     elif head_v1.exists():
         ar.linear.load_state_dict(torch.load(head_v1, map_location="cuda"))
         print(f"[fve] loaded AR v1 (Linear only)", flush=True)
@@ -115,6 +121,9 @@ def main():
             strokes = av.vocab.decode_tokens(ids.tolist())
             img = stroke_render(strokes)
             h_hat = ar.forward([img]).squeeze(0)
+            if h_mean_correction is not None:
+                # AR predicted (h - mean); add mean back for fair FVE measurement
+                h_hat = h_hat + h_mean_correction
             h_hats.append(h_hat.detach())
         h_hat_avg = torch.stack(h_hats, dim=0).mean(dim=0)
 
