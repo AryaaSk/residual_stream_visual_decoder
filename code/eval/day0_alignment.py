@@ -43,26 +43,20 @@ from PIL import Image, ImageDraw
 
 MODEL_ID_DEFAULT = "google/gemma-4-e2b-it"
 
-# A curated list of 100 concrete concepts that are likely to have stable
-# visual depictions and clear text representations.
+# 50 concepts that exist in QuickDraw's categories (so we can use REAL human
+# drawings for the image side of day-0). Procedural fallback works for anything,
+# but produces alignment near zero because random scribbles aren't recognisable.
 CONCEPTS = [
     "cat", "dog", "horse", "elephant", "fish", "bird", "snake", "spider",
-    "mouse", "rabbit", "lion", "tiger", "bear", "cow", "pig", "chicken",
-    "apple", "banana", "carrot", "tomato", "strawberry", "grape", "pizza", "bread",
-    "egg", "cheese", "cookie", "cake", "donut", "ice cream",
-    "tree", "flower", "leaf", "mushroom", "rose", "cactus", "grass", "rock",
-    "mountain", "river", "cloud", "sun", "moon", "star", "lightning", "rainbow",
-    "house", "tent", "bridge", "tower", "church", "school", "barn",
-    "car", "bicycle", "airplane", "boat", "train", "truck", "rocket", "scooter",
+    "apple", "banana", "carrot", "pizza", "donut", "cookie", "bread",
+    "tree", "flower", "leaf", "mushroom", "cactus",
+    "mountain", "cloud", "sun", "moon", "star", "rainbow",
+    "house", "tent", "bridge", "tower",
+    "car", "bicycle", "airplane", "boat", "train", "truck", "rocket",
     "chair", "table", "bed", "lamp", "clock", "door", "window", "key",
-    "book", "pencil", "scissors", "phone", "computer", "camera", "umbrella", "hat",
-    "shoe", "shirt", "glasses", "watch", "bag", "ring",
-    "circle", "triangle", "square", "arrow", "heart", "smile",
-    "France", "England", "Japan", "Africa",
-    "fire", "water", "wind", "snow", "ice",
-    "music", "love",
+    "book", "pencil", "scissors", "phone", "umbrella",
 ]
-assert len(CONCEPTS) == 100, f"Expected 100 concepts, got {len(CONCEPTS)}"
+assert len(CONCEPTS) == 50, f"Expected 50 concepts, got {len(CONCEPTS)}"
 
 
 def render_concept_sketch_procedural(concept: str, size: int = 224) -> Image.Image:
