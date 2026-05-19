@@ -55,6 +55,10 @@ def run_av_on_all(av: StrokeDecoder, hs: list[torch.Tensor], layer: int,
         mp4_path = out_dir / f"{slug}_{suffix}.mp4"
         img = stroke_render(strokes, save_animation_path=str(mp4_path), fps=24)
         img.save(png_path)
+        # 4× display upscale (vector-lossless re-render at higher resolution)
+        img_4x = stroke_render(strokes, display_scale=4.0)
+        img_4x.save(out_dir / f"{slug}_{suffix}_4x.png")
+        stroke_render(strokes, display_scale=4.0, save_animation_path=str(out_dir / f"{slug}_{suffix}_4x.mp4"), fps=24)
         rows.append({"slug": slug, "text": text, "strokes": len(strokes), "tokens": len(ids), "malformed": malformed})
     return rows
 
@@ -121,10 +125,10 @@ img, video {{ width: 200px; background: #fff; border: 1px solid #eee; }}
         parts.append(f"""
 <tr>
   <td><b>{slug}</b><br><span class='prompt'>{text}</span></td>
-  <td><img src='{slug}_A.png'><br><video src='{slug}_A.mp4' controls muted loop></video><br>
-      <span class='stats'>strokes={a['strokes']}, tokens={a['tokens']}, malformed={a['malformed']}</span></td>
-  <td><img src='{slug}_B.png'><br><video src='{slug}_B.mp4' controls muted loop></video><br>
-      <span class='stats'>strokes={b['strokes']}, tokens={b['tokens']}, malformed={b['malformed']}</span></td>
+  <td><img src='{slug}_A_4x.png'><br><video src='{slug}_A_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes={a['strokes']}, tokens={a['tokens']}, malformed={a['malformed']} · <a href='{slug}_A.png'>native 224px</a></span></td>
+  <td><img src='{slug}_B_4x.png'><br><video src='{slug}_B_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes={b['strokes']}, tokens={b['tokens']}, malformed={b['malformed']} · <a href='{slug}_B.png'>native 224px</a></span></td>
 </tr>""")
     parts.append("</table></body></html>")
     (args.out_dir / "index.html").write_text("".join(parts))

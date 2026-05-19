@@ -68,7 +68,14 @@ def main():
         mp4_path = args.out_dir / f"{slug}.mp4" if args.mp4 else None
         img = stroke_render(strokes, save_animation_path=str(mp4_path) if mp4_path else None, fps=24)
         img.save(png_path)
-        print(f"  → {png_path.name}  strokes={len(strokes)}  tokens={len(gen_ids)}  malformed={malformed}", flush=True)
+        # Always emit a 4× upscaled version for display / sharing
+        png_path_4x = args.out_dir / f"{slug}_4x.png"
+        img_4x = stroke_render(strokes, display_scale=4.0)
+        img_4x.save(png_path_4x)
+        if args.mp4:
+            mp4_path_4x = args.out_dir / f"{slug}_4x.mp4"
+            stroke_render(strokes, display_scale=4.0, save_animation_path=str(mp4_path_4x), fps=24)
+        print(f"  → {png_path.name} (+ {png_path_4x.name})  strokes={len(strokes)}  tokens={len(gen_ids)}  malformed={malformed}", flush=True)
         rows.append({"slug": slug, "text": text, "n_strokes": len(strokes), "n_tokens": len(gen_ids), "malformed": malformed})
 
     # HTML index
