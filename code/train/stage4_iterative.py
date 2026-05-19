@@ -267,9 +267,15 @@ def main():
 
     # ---- Extract caption-activation corpus once ----
     print(f"[iter] loading SFT corpus {args.sft_corpus}", flush=True)
-    rows = load_sft_corpus(args.sft_corpus)[: args.n_corpus]
+    rows = load_sft_corpus(args.sft_corpus)
     captions = [r["caption"] for r in rows]
-    print(f"[iter] extracting caption activations for {len(captions)} captions at L{args.layer}", flush=True)
+    # IMPORTANT: exclude held-out probes from the training distribution so the FVE
+    # measurement actually tests generalisation, not memorisation.
+    heldout_set = set(HELDOUT_PROBES)
+    captions = [c for c in captions if c not in heldout_set]
+    captions = captions[: args.n_corpus]
+    print(f"[iter] extracting caption activations for {len(captions)} captions at L{args.layer} "
+          f"(after held-out filter; {len(heldout_set)} eval probes excluded)", flush=True)
     from transformers import AutoTokenizer
     tok = AutoTokenizer.from_pretrained(args.model_id)
     target_backbone = av.model  # reuse AV's backbone for extraction; same Gemma 4 weights apart from a few new vocab rows
