@@ -25,6 +25,7 @@ import torch
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from ar.lora_gemma4 import load_lora_state  # noqa: E402
 from ar.reconstructor import TruncatedGemmaAR  # noqa: E402
 from eval.fve_metric import metric_summary  # noqa: E402
 from render import render as stroke_render  # noqa: E402
@@ -75,23 +76,37 @@ def main():
     av.model.eval()
     device = av.device()
 
-    # Load AR
+    # Load AR — supports four checkpoint formats:
+    #   v1: linear.pt = Linear state_dict
+    #   v2: head.pt = {"linear": ..., "head_type": linear|mlp}
+    #   v3: same as v2 plus "h_mean" (centered training)
+    #   v4 (v1.0 / stage4): same as v2 plus "lora" = dict[str, Tensor] (LoRA A/B per module)
     print(f"[fve] loading AR from {args.ar_ckpt}", flush=True)
-    ar = TruncatedGemmaAR.from_pretrained(args.model_id, layer_ell=args.layer, device="cuda")
     head_v2 = args.ar_ckpt / "head.pt"
     head_v1 = args.ar_ckpt / "linear.pt"
     h_mean_correction = None
+    has_lora = False
     if head_v2.exists():
         ckpt = torch.load(head_v2, map_location="cuda", weights_only=False)
+        has_lora = "lora" in ckpt and ckpt["lora"]
+    ar = TruncatedGemmaAR.from_pretrained(
+        args.model_id, layer_ell=args.layer, device="cuda",
+        use_backbone_lora=has_lora,
+    )
+    if head_v2.exists():
         head_type = ckpt.get("head_type", "linear")
         if head_type == "mlp":
             from train.stage2_v2_ar_supervised import MLP2Head
             ar.linear = MLP2Head(ar.hidden_size).cuda().to(next(ar.backbone.parameters()).dtype)
         ar.linear.load_state_dict(ckpt["linear"])
         if "h_mean" in ckpt:
-            # AR v3: was trained on centered targets, so we add the mean back at inference
             h_mean_correction = ckpt["h_mean"].cuda()
-            print(f"[fve] loaded AR v3 (centered training); ||h_mean||={float(h_mean_correction.norm()):.2f}", flush=True)
+            print(f"[fve] loaded AR v3 (centered training); ||h_mean||={float(h_mean_correction.norm()):.2f}",
+                  flush=True)
+        if has_lora:
+            load_lora_state(ar, ckpt["lora"], strict=True)
+            print(f"[fve] loaded AR v4 with LoRA backbone ({len(ckpt['lora']) // 2} modules)",
+                  flush=True)
         else:
             print(f"[fve] loaded AR v2 head_type={head_type}", flush=True)
     elif head_v1.exists():

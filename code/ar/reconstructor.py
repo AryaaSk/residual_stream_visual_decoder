@@ -1,4 +1,4 @@
-"""Activation Reconstructor (AR): truncated Gemma 4 + Linear(d, d).
+"""Activation Reconstructor (AR): truncated Gemma 4 + Linear(d, d) + optional backbone LoRA.
 
 Reads a rendered PNG of strokes through Gemma 4's existing vision encoder
 and the first ℓ transformer layers, then projects through a learned
@@ -9,6 +9,19 @@ The "truncation" is implemented by EARLY-EXITING the forward pass after
 layer ℓ rather than physically deleting layers. This makes it trivial to
 share a single base model across multiple AR instances (one per ℓ) at
 training time and at inference time.
+
+v1.0 addition: optional backbone LoRA on attention projections. When
+``use_backbone_lora=True`` is passed to ``from_pretrained``, we attach
+parallel ``LoRADelta`` branches to every ``Gemma4ClippableLinear`` matching
+q/k/v/o_proj in the vision tower and in the first ``layer_ell`` language
+layers. See ``code/ar/lora_gemma4.py``.
+
+Gradient policy: the backbone's BASE weights are always frozen
+(``param.requires_grad = False``); only LoRA A/B parameters and the final
+``Linear(d, d)`` head receive gradients. ``forward()`` no longer wraps the
+backbone in ``torch.no_grad()``: gradients flow back through the LoRA
+branches when LoRA is attached, otherwise the frozen-param graph is small
+enough that the overhead is negligible.
 """
 
 from __future__ import annotations
@@ -24,9 +37,9 @@ class TruncatedGemmaAR(nn.Module):
     """Wraps a vision-language Gemma 4 model and a `Linear(d, d)` reconstruction head.
 
     For a forward pass:
-        1. encode the image via Gemma's vision encoder
+        1. encode the image via Gemma's vision encoder (with LoRA if enabled)
         2. wrap with a fixed text prompt
-        3. run through the first ℓ transformer layers
+        3. run through the first ℓ transformer layers (with LoRA if enabled)
         4. take the activation at the LAST position
         5. apply Linear(d, d) to get ĥ
 
@@ -53,6 +66,7 @@ class TruncatedGemmaAR(nn.Module):
         with torch.no_grad():
             self.linear.weight.normal_(mean=0.0, std=linear_init_std)
             self.linear.bias.zero_()
+        self.has_backbone_lora = False  # set by from_pretrained when LoRA attached
 
     @classmethod
     def from_pretrained(
@@ -61,6 +75,10 @@ class TruncatedGemmaAR(nn.Module):
         layer_ell: int,
         device: str = "cuda",
         dtype: torch.dtype = torch.bfloat16,
+        use_backbone_lora: bool = False,
+        lora_rank: int = 16,
+        lora_alpha: int = 32,
+        include_vision_tower: bool = True,
     ) -> "TruncatedGemmaAR":
         from transformers import AutoModelForCausalLM, AutoProcessor
         backbone = AutoModelForCausalLM.from_pretrained(
@@ -70,6 +88,20 @@ class TruncatedGemmaAR(nn.Module):
         hidden = backbone.config.text_config.hidden_size
         ar = cls(backbone, processor, layer_ell=layer_ell, hidden_size=hidden)
         ar.linear.to(device=device, dtype=dtype)
+        if use_backbone_lora:
+            # Freeze the backbone before attaching LoRA, then unfreeze only LoRA params.
+            for p in ar.backbone.parameters():
+                p.requires_grad = False
+            import sys
+            from pathlib import Path as _P
+            sys.path.insert(0, str(_P(__file__).resolve().parents[1]))
+            from ar.lora_gemma4 import attach_lora_to_ar
+            attach_lora_to_ar(
+                ar, layer_ell=layer_ell, rank=lora_rank, alpha=lora_alpha,
+                include_vision_tower=include_vision_tower,
+                include_language_first_ell=True, verbose=True,
+            )
+            ar.has_backbone_lora = True
         return ar
 
     def _process_image(self, image) -> dict:
@@ -95,22 +127,19 @@ class TruncatedGemmaAR(nn.Module):
         images: list of PIL Images (length B)
         """
         device = next(self.parameters()).device
-        # The Gemma4 processor processes one item at a time; batch by stacking
-        # input_ids / attention_mask manually and using the model's own padding logic.
-        # For Day-1 simplicity we loop and forward one-by-one, then stack output.
         outs: list[torch.Tensor] = []
         last_positions: list[int] = []
+        # Gradients must flow when LoRA is attached and we're in training mode.
+        grad_enabled = self.training and (self.has_backbone_lora or any(p.requires_grad for p in self.linear.parameters()))
         for img in images:
             inputs = self._process_image(img)
             inputs = {k: v.to(device) for k, v in inputs.items() if isinstance(v, torch.Tensor)}
-            with torch.no_grad():
-                # Run the LANGUAGE model only up to layer ℓ
+            with torch.set_grad_enabled(grad_enabled):
                 out = self.backbone(
                     **inputs,
                     output_hidden_states=True,
                     use_cache=False,
                 )
-            # hidden_states[layer_ell] has shape (1, T, hidden)
             h = out.hidden_states[self.layer_ell][0, -1, :]
             outs.append(h)
             last_positions.append(int(inputs["input_ids"].shape[1] - 1))
