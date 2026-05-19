@@ -221,12 +221,27 @@ def main():
     print(f"[grpo] trainable params: {embed.weight.numel() / 1e6:.2f}M (new-vocab embeddings only)", flush=True)
     optim = torch.optim.AdamW([embed.weight], lr=args.lr)
 
-    # AR (frozen)
+    # AR (frozen). Supports two on-disk formats:
+    #   stage2 v1: linear.pt  (Linear(d,d) state_dict)
+    #   stage2 v2: head.pt    (dict with 'linear' state_dict + 'head_type')
     print(f"[grpo] loading AR from {args.ar_ckpt}", flush=True)
-    from transformers import AutoModelForCausalLM, AutoProcessor
     ar = TruncatedGemmaAR.from_pretrained(args.model_id, layer_ell=args.layer, device="cuda")
-    linear_sd = torch.load(args.ar_ckpt / "linear.pt", map_location="cuda")
-    ar.linear.load_state_dict(linear_sd)
+    head_v2 = args.ar_ckpt / "head.pt"
+    head_v1 = args.ar_ckpt / "linear.pt"
+    if head_v2.exists():
+        ckpt = torch.load(head_v2, map_location="cuda", weights_only=False)
+        head_type = ckpt.get("head_type", "linear")
+        if head_type == "mlp":
+            from train.stage2_v2_ar_supervised import MLP2Head
+            ar.linear = MLP2Head(ar.hidden_size).cuda().to(next(ar.backbone.parameters()).dtype)
+        ar.linear.load_state_dict(ckpt["linear"])
+        print(f"[grpo] loaded AR v2 head_type={head_type}", flush=True)
+    elif head_v1.exists():
+        linear_sd = torch.load(head_v1, map_location="cuda")
+        ar.linear.load_state_dict(linear_sd)
+        print(f"[grpo] loaded AR v1 (Linear only)", flush=True)
+    else:
+        raise FileNotFoundError(f"No AR head found at {args.ar_ckpt} (expected head.pt or linear.pt)")
     ar.eval()
     for p in ar.parameters():
         p.requires_grad = False
