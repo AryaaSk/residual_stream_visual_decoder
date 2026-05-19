@@ -244,6 +244,8 @@ FULL Gemma 4 E2B:                          AR (= truncated):
 
 Why truncate? Because `h_ℓ` was the activation at layer ℓ in the original Gemma. We want `ĥ_ℓ` in the same coordinate frame (same layer of the same architecture).
 
+**Important capability note:** the AR's backbone is **full pretrained Gemma 4 E2B**, including its vision encoder. This means **the AR can read text in images** (Gemma 4 was pretrained on internet-scale data including OCR-rich material). If the AV decides during Stage 3 RL that "writing the concept as letters" is a viable encoding (e.g., draw `cat` as block letters when h_ℓ = activation for "cat"), the AR will RECOGNISE the letters and produce a `ĥ_ℓ` close to the target. Reward flows. This is a real possibility, not a failure mode — see the "letter-writing convergence" item in `05-evaluation.md`. The KL penalty in Stage 3 is what arbitrates between "concept sketch" and "letter writing" as the model's chosen encoding.
+
 ### Forward pass
 
 ```

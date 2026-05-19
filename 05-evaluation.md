@@ -103,15 +103,18 @@ Lay them out side by side. The visual NLA's value-add is most visible when:
 - The thought is **partially formed** (a vague drawing reads as vague; a vague text reads as wrong)
 - The activation is **mixed** (drawing can show overlaid concepts; text picks one)
 
-## Failure modes to watch for
+## Failure modes (and one "failure" that's secretly interesting)
 
-| Symptom | Likely cause | Fix |
+| Symptom | Likely cause | Fix / framing |
 |---|---|---|
-| All drawings look the same | AV ignoring activation injection | Increase α, increase RL signal, check `<ACT_TOKEN>` actually replaced |
-| Reasonable drawings but FVE near 0 | Drawings are visually correct but AR can't read them | Bigger AR adapter, vision-encoder fine-tune, try alternative AR architecture |
-| FVE good but drawings are scribbles | RL has found an "incomprehensible code" | Increase KL penalty β toward SFT init, add discriminator loss for "drawing-like" |
-| Drawings only sensible at one layer | Layer-conditioned model not generalising | Switch to per-layer pairs for tricky layers |
-| All drawings look like cats | SFT corpus too imbalanced toward QuickDraw cats | Reweight corpus, sample categories uniformly |
+| All drawings look the same | AV ignoring activation injection | Increase α, increase RL signal, verify `<ACT_TOKEN>` actually overridden |
+| Reasonable drawings but FVE near 0 | Drawings depict the concept but AR's `Linear(d,d)` can't extract that into target's coordinate frame | Bigger AR adapter (2-3 layer MLP), brief vision-encoder fine-tune on QuickDraw style |
+| FVE good but drawings are unrecognisable scribbles | RL found an "incomprehensible code" — AV invented an arbitrary visual encoding that AR (frozen Gemma 4 with vision) happens to decode | Increase KL penalty β toward SFT init |
+| **AV writes the word for the concept as block letters** | **Not a failure** — Gemma 4 can OCR, so writing `cat` is a valid (and arguably more interpretable) encoding than sketching one. The reward signal will reinforce this if KL doesn't prevent it. | If you want concept sketches: increase β. If you want letter-writing as the result: decrease β and rerun. **Either output is publishable.** |
+| Drawings only sensible at one layer | Layer-conditioned model not generalising | Switch to full per-layer pairs for tricky layers |
+| All drawings look like cats / one category | SFT corpus too imbalanced | Re-weight QuickDraw categories uniformly during corpus build |
+
+**Important context for the "letter writing" row:** the AR's backbone is full pretrained Gemma 4 E2B (with its vision encoder). Gemma 4 was pretrained on internet-scale image-text data including OCR-rich material, so it can read text in images. If AV writes `cat` in strokes, the AR's vision encoder will represent the image similarly to how it represents the word "cat" from text, and reconstruction succeeds. The β coefficient in the KL penalty is the knob that arbitrates between "sketch the concept" (β large → AV pulled toward QuickDraw prior) and "write the concept" (β small → AV free to discover letter-writing as the highest-bandwidth encoding).
 
 ## Stop criteria
 
