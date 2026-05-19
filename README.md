@@ -1,61 +1,114 @@
 # Residual Stream Visual Decoder
 
-A "visual lens" for LLM activations. Trains a stroke-output decoder that converts mid-stack residual stream vectors from Gemma 4 E2B into hand-drawn-style images, jointly trained with an image-input reconstructor (using Gemma 4's native vision pathway) so the drawings must be informative enough to recover the original activation.
+**Train a model to draw what Gemma 4 is thinking.**
 
-Inspired directly by Anthropic's **Natural Language Autoencoders (NLAs, 2026)**, which decode activations to text. We do the same thing but the output is **drawings**, not text, giving us a visual interface to the model's internal thoughts.
+Each panel below is a real drawing produced by sampling stroke tokens from an
+*Activation Verbalizer* that received Gemma 4 E2B's residual-stream activation
+at layer ℓ, injected via embedding-layer surgery. The drawings are not
+generated from the prompt's text — they come from the *internal vector* the
+model is processing.
 
-## Why it's interesting
+<!-- The hype reel + per-token + cross-layer galleries are inserted by build_index.py after training. -->
 
-The unoccupied square in the literature: small (≤4B) open LLM × vector stroke channel × interleaved with text reasoning × for interpretability. No published work fills this slot.
-
-The drawings carry information that text NLA explanations cannot:
-- **Spatial structure** that text struggles to convey (concept maps, geometric relationships, "fuzziness" of a half-formed thought)
-- **Animation** showing how the drawing unfolds, providing a "stroke order" that hints at the order in which features come together
-- **Continuous morph across layers** when you sweep ℓ: a more legible "thought trajectory" than the abrupt token changes you get from text logit-lens
-
-## TL;DR architecture
+<p align="center">
+  <video src="demo.mp4" width="640" controls muted loop autoplay></video>
+</p>
 
 ```
-target_activation (Gemma 4)
-   │
-   ▼
- [AV: stroke decoder] ─→ stroke tokens
-                              │
-                              ▼
-                       [renderer]  ─→ animated MP4 + final PNG
-                              │
-                              ▼
-                       [AR: truncated Gemma 4 reading PNG via vision pathway]
-                              │
-                              ▼
-                       reconstructed activation
-                              │
-                              ▼
-              MSE loss against original activation
+┌─────────────────────┐  h_ℓ ∈ ℝ¹⁵³⁶  ┌────────────────────────┐
+│ Gemma 4 E2B (frozen)│ ────────────▶ │ AV: stroke decoder      │
+│  process prompt     │                │ vocab +262 stroke tokens│
+└─────────────────────┘                │ activation injected at  │
+                                       │ <ACT_TOKEN> embedding   │
+                                       └────────┬───────────────┘
+                                                │ stroke tokens
+                                                ▼
+                                       ┌────────────────┐
+                                       │ deterministic  │  PNG + animated MP4
+                                       │ renderer       │
+                                       └────────┬───────┘
+                                                ▼
+                                       ┌─────────────────────────┐
+                                       │ AR: truncated Gemma 4   │
+                                       │ + backbone LoRA + Linear│
+                                       │ reads PNG via vision    │
+                                       └────────┬───────────────┘
+                                                │ ĥ_ℓ
+                                                ▼
+                          MSE(h_ℓ, ĥ_ℓ) drives the iterative refinement loop
 ```
 
-Three Gemma 4 E2B instances:
-- **TARGET** (frozen): source of activations.
-- **AV** (verbalizer / stroke decoder): vocab extended with 262 stroke tokens, activation injected as a special token embedding, trained with GRPO.
-- **AR** (reconstructor): truncated to first ℓ layers, reads rendered PNG through Gemma 4's existing vision encoder, output through `Linear(d, d)`, trained with supervised MSE.
+The recipe is Anthropic's [Natural Language Autoencoders (2026)](https://transformer-circuits.pub/2026/nla/index.html)
+adapted from text output to vector strokes:
 
-Loss is round-trip activation MSE. Same recipe as NLA, swap text-channel for stroke-channel.
+1. **Activation Verbalizer (AV)**: Gemma 4 E2B with 262 stroke tokens added to its vocabulary.
+   The target activation is injected by overwriting `<ACT_TOKEN>`'s embedding row.
+2. **Reconstructor (AR)**: truncated Gemma 4 E2B (first ℓ layers) + a custom LoRA on every
+   attention `q/k/v/o_proj` (including the vision tower) + a `Linear(d, d)` head.
+3. **Iterative joint training**: alternate AR supervised steps (with fresh AV-generated
+   buffer to track distribution) and AV GRPO steps (with frozen AR providing reward).
+   Five outer iterations.
 
-## Files in this folder
+## Try it on your own prompt
 
-| File | Contents |
+```bash
+python demo.py "The capital of France is"
+python demo.py "I am thinking about a dog." --layer 12 --open
+python demo.py "What is 47 + 38?" --layer 12
+```
+
+Outputs land under `demo_output/<slug>/` — `drawing.png` (224×224, what AR saw),
+`drawing_4x.png` (896×896, vector-rerendered for display), `drawing_4x.mp4`
+(stroke-by-stroke animation).
+
+## What's in this repo
+
+| Path | Contents |
 |---|---|
-| `01-vision.md` | What we're building, why it's novel, why strokes specifically |
-| `02-architecture.md` | Full technical architecture, every component spec'd, diagrams |
-| `03-training.md` | The 4-stage training pipeline + compute estimates |
-| `04-renderer.md` | The deterministic renderer + animation pipeline |
-| `05-evaluation.md` | Day-0 sanity check, FVE metric, qualitative eval, baselines |
-| `06-prior-work.md` | Anthropic NLA, Pi Zero, stroke models, multimodal LLMs |
+| `code/verbalizer/` | AV: vocab extension + activation injection + sampling |
+| `code/ar/` | AR: truncated Gemma + Linear head + custom LoRA on Gemma4ClippableLinear |
+| `code/train/` | Stage 1 SFT, Stage 2 v1/v2/v3/v4 ablations, Stage 3 GRPO, **Stage 4 iterative (v1.0)** |
+| `code/eval/` | inject_demo, compare_av, measure_fve, alpha_sweep, activation_geometry, token_trajectory, cross_layer_trajectory, build_index |
+| `code/lenses/` | logit lens + tuned lens (per-layer text-side baselines) |
+| `code/render.py` | Deterministic Cartesian stroke-5 renderer with vector upscaling |
+| `code/stroke_tokenizer.py` | 262-token stroke vocabulary (Δx, Δy, pen-state) |
+| `code/tests/` | 32 unit tests (tokenizer, renderer, LoRA) |
+| `bin/h200` | Sync/run/bg/pull helper for the GCP H200 instance |
+| `WRITEUP.md` | The full v1.0 findings document |
+| `INDEX.html` | Browsable landing page for all artefacts |
+| `demo.py` | One-click demo: prompt → drawing |
+| `artefacts/` | Per-probe drawings + per-token + cross-layer MP4s |
+| `findings/` | Plots, JSON metrics, alpha sweep, FVE measurements |
+| `research_log/` | Chronological journal of every experiment |
+| `01-vision.md` … `07-execution-plan.md` | The original design docs |
 
-## Status
+## How it was built (3-day sprint)
 
-Architecture spec complete. Awaiting compute allocation for Day-0 modality-alignment sanity check (1 GPU-hour, must pass before any training).
+- **v0.1** (Day 1-2): full architecture standup. FVE = 0 across 5 AR variants (Linear/MLP/centered/contrastive). Bottleneck identified.
+- **v1.0** (Day 3-): custom LoRA on `Gemma4ClippableLinear` + iterative joint AR + AV training (the genuine NLA recipe). Unlocked the FVE bottleneck.
 
-## Hardware
+Read `WRITEUP.md` for the full story including all five engineering discoveries:
+alpha tuning (1.0 → 0.5), AR data quality matters more than AR training length,
+L16 is one of the most-clustered layers (use L3 / L12 / L24 instead),
+frozen-backbone AR cannot break FVE 0 regardless of training scheme,
+iterative joint training unlocks per-prompt discrimination.
 
-2× H200 confirmed for initial work. More TBD. See `03-training.md` for budget tiers (3-hr / 24-hr / week).
+## Reproduce
+
+```bash
+git clone https://github.com/AryaaSk/residual_stream_visual_decoder.git
+cd residual_stream_visual_decoder
+pip install -r requirements.txt
+# Pull our trained checkpoints (TBD: Hugging Face release)
+# Then:
+python demo.py "your prompt here"
+```
+
+Training scripts live under `code/train/`. The v1.0 trainer is
+`code/train/stage4_iterative.py`. See `07-execution-plan.md` for the full
+recipe and hyperparameters.
+
+## License
+
+Code: MIT.
+Checkpoints: derive from Gemma 4 E2B which is under [Google's Gemma Terms of Use](https://ai.google.dev/gemma/terms).
