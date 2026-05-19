@@ -31,7 +31,7 @@ import torch
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from av.stroke_decoder import StrokeDecoder, build_target_stroke_ids, SFT_PROMPT_TEMPLATE  # noqa: E402
+from verbalizer.stroke_decoder import StrokeDecoder, build_target_stroke_ids, SFT_PROMPT_TEMPLATE  # noqa: E402
 from stroke_tokenizer import DRAW_OPEN, DRAW_CLOSE  # noqa: E402
 
 
@@ -136,36 +136,19 @@ def main():
         val_data.append((ex["caption"], ids))
     print(f"[sft] retained train={len(train_data)} val={len(val_data)}", flush=True)
 
-    # Wrap with LoRA
-    from peft import get_peft_model
-    print(f"[sft] applying LoRA rank={args.lora_rank}", flush=True)
-    decoder.model = get_peft_model(decoder.model, make_lora_config(args.lora_rank, args.lora_rank * 2))
-
-    # Mark the new-vocab embedding rows as trainable
+    # Anole-minimal: freeze backbone, train only the new-vocab embedding rows.
+    # (Gemma 4 uses Gemma4ClippableLinear which PEFT 0.13 doesn't auto-recognise;
+    # skipping LoRA simplifies things, matches Anole's smallest recipe, and is the
+    # right starting point for "do the new tokens learn to draw at all?")
+    for p in decoder.model.parameters():
+        p.requires_grad = False
     embed = decoder.model.get_input_embeddings()
     old_vocab = embed.weight.shape[0] - len(decoder.vocab.name_to_id)
     print(f"[sft] embedding shape: {tuple(embed.weight.shape)}, new tokens start at {old_vocab}", flush=True)
-
-    # Build per-parameter groups: small lr for LoRA, larger lr for new vocab rows
-    new_vocab_param_names = set()
-    lora_params = []
-    new_vocab_params = []
-    for name, p in decoder.model.named_parameters():
-        if p.requires_grad:
-            if "lora_" in name:
-                lora_params.append(p)
-            else:
-                # this branch shouldn't fire if PEFT did its job
-                pass
-    # Add the new-vocab embedding rows as a trainable group (slice gradient hook)
     embed.weight.requires_grad = True
-    new_vocab_params.append(embed.weight)
 
     optim = torch.optim.AdamW(
-        [
-            {"params": lora_params, "lr": args.lr},
-            {"params": new_vocab_params, "lr": SFTConfig.new_vocab_lr},
-        ],
+        [{"params": [embed.weight], "lr": SFTConfig.new_vocab_lr}],
         weight_decay=0.0,
     )
 
@@ -218,8 +201,10 @@ def main():
                 if step % args.save_every == 0 and step > 0:
                     save_dir = out_dir / f"step_{step:06d}"
                     save_dir.mkdir(parents=True, exist_ok=True)
-                    decoder.model.save_pretrained(save_dir)
-                    torch.save({"vocab_name_to_id": decoder.vocab.name_to_id}, save_dir / "stroke_vocab.pt")
+                    # Save just the new-vocab rows + the vocab dict (Anole-minimal)
+                    new_rows = embed.weight.detach()[old_vocab:].cpu().clone()
+                    torch.save({"new_embed_rows": new_rows, "old_vocab_size": old_vocab,
+                                "vocab_name_to_id": decoder.vocab.name_to_id}, save_dir / "av_ckpt.pt")
                     print(f"[sft] saved → {save_dir}", flush=True)
 
                 step += 1
@@ -231,8 +216,9 @@ def main():
     # Final save
     final_dir = out_dir / "final"
     final_dir.mkdir(parents=True, exist_ok=True)
-    decoder.model.save_pretrained(final_dir)
-    torch.save({"vocab_name_to_id": decoder.vocab.name_to_id}, final_dir / "stroke_vocab.pt")
+    new_rows = embed.weight.detach()[old_vocab:].cpu().clone()
+    torch.save({"new_embed_rows": new_rows, "old_vocab_size": old_vocab,
+                "vocab_name_to_id": decoder.vocab.name_to_id}, final_dir / "av_ckpt.pt")
     print(f"[sft] DONE. final at {final_dir}", flush=True)
 
 

@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from av.activation_injection import build_prompt_with_activation, stroke_token_ids  # noqa: E402
+from verbalizer.activation_injection import build_prompt_with_activation, stroke_token_ids  # noqa: E402
 from stroke_tokenizer import ACT_TOKEN, DRAW_CLOSE, DRAW_OPEN, PEN_END, StrokeVocab  # noqa: E402
 
 
@@ -49,11 +49,38 @@ class StrokeDecoder:
         dtype: torch.dtype = torch.bfloat16,
     ) -> "StrokeDecoder":
         from transformers import AutoModelForCausalLM, AutoTokenizer
-        from av.vocab_extend import extend_model_and_tokenizer
+        from verbalizer.vocab_extend import extend_model_and_tokenizer
         model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=dtype, attn_implementation="sdpa").to(device)
         tok = AutoTokenizer.from_pretrained(model_id)
         vocab = extend_model_and_tokenizer(model, tok)
         return cls(model=model, tokenizer=tok, vocab=vocab)
+
+    @classmethod
+    def from_ckpt(
+        cls,
+        av_ckpt_dir,
+        model_id: str = "google/gemma-4-e2b-it",
+        device: str = "cuda",
+        dtype: torch.dtype = torch.bfloat16,
+    ) -> "StrokeDecoder":
+        """Load Stage-1 checkpoint: backbone fresh, only the new-vocab embedding rows are loaded.
+
+        The Stage-1 SFT script saves only the new embedding rows + the vocab name->id
+        mapping in `av_ckpt.pt`. We rebuild the full model and overwrite those rows.
+        """
+        from pathlib import Path as _Path
+        instance = cls.from_pretrained_and_extend(model_id, device=device, dtype=dtype)
+        ckpt_file = _Path(av_ckpt_dir) / "av_ckpt.pt"
+        ckpt = torch.load(ckpt_file, weights_only=False)
+        instance.vocab = StrokeVocab.from_name_to_id(ckpt["vocab_name_to_id"])
+        old_vocab = int(ckpt["old_vocab_size"])
+        new_rows = ckpt["new_embed_rows"]
+        embed = instance.model.get_input_embeddings()
+        with torch.no_grad():
+            embed.weight.data[old_vocab : old_vocab + new_rows.shape[0]] = new_rows.to(
+                device=embed.weight.device, dtype=embed.weight.dtype
+            )
+        return instance
 
     def device(self):
         return next(self.model.parameters()).device

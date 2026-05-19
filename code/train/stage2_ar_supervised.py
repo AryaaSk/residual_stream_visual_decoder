@@ -32,7 +32,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from ar.reconstructor import TruncatedGemmaAR  # noqa: E402
-from av.stroke_decoder import StrokeDecoder  # noqa: E402
+from verbalizer.stroke_decoder import StrokeDecoder  # noqa: E402
 from render import render as stroke_render  # noqa: E402
 
 
@@ -69,41 +69,25 @@ def main():
     print(f"[ar-sup] {h_all.shape[0]} activations, hidden={h_all.shape[1]}", flush=True)
     assert len(texts) == h_all.shape[0]
 
-    # Load AV (frozen)
+    # Load AV from av_ckpt.pt (Anole-minimal: just the new embedding rows)
     print(f"[ar-sup] loading AV from {args.av_ckpt}", flush=True)
-    av = StrokeDecoder.from_pretrained_and_extend(args.model_id, device="cuda", dtype=torch.bfloat16)
-    # Restore vocab IDs from saved file (in case tokenizer order changed)
-    saved_vocab = torch.load(args.av_ckpt / "stroke_vocab.pt", weights_only=False)
-    from stroke_tokenizer import StrokeVocab
-    av.vocab = StrokeVocab.from_name_to_id(saved_vocab["vocab_name_to_id"])
-    # Apply LoRA from checkpoint
-    from peft import PeftModel
-    av.model = PeftModel.from_pretrained(av.model, args.av_ckpt)
+    av = StrokeDecoder.from_ckpt(args.av_ckpt, model_id=args.model_id, device="cuda", dtype=torch.bfloat16)
     av.model.eval()
     for p in av.model.parameters():
         p.requires_grad = False
 
-    # Build AR
+    # Build AR. Backbone (incl. vision encoder) is FROZEN; only Linear(d,d) trains.
+    # We skip LoRA on the backbone for Day-1 simplicity (PEFT 0.13 doesn't auto-
+    # recognise Gemma4ClippableLinear; adding manual targets is doable but adds risk
+    # for the Day-1 milestone).
     print(f"[ar-sup] building AR at layer {args.layer}", flush=True)
     ar = TruncatedGemmaAR.from_pretrained(args.model_id, layer_ell=args.layer, device="cuda")
-    # AR's backbone is frozen; Linear head and (optional) LoRA trainable
     for p in ar.backbone.parameters():
         p.requires_grad = False
     for p in ar.linear.parameters():
         p.requires_grad = True
-    # Add LoRA to AR's backbone
-    from peft import LoraConfig, get_peft_model, TaskType
-    lora_cfg = LoraConfig(
-        r=args.lora_rank,
-        lora_alpha=args.lora_rank * 2,
-        target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-        lora_dropout=0.0,
-        bias="none",
-        task_type=TaskType.FEATURE_EXTRACTION,
-    )
-    ar.backbone = get_peft_model(ar.backbone, lora_cfg)
     trainable = [p for p in ar.parameters() if p.requires_grad]
-    print(f"[ar-sup] trainable params: {sum(p.numel() for p in trainable)/1e6:.2f}M", flush=True)
+    print(f"[ar-sup] trainable params (Linear head only): {sum(p.numel() for p in trainable)/1e6:.2f}M", flush=True)
     optim = torch.optim.AdamW(trainable, lr=args.lr)
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -118,19 +102,18 @@ def main():
     def sample_drawing_for_text(text: str):
         # Use the text as a caption directly. If too long, take first 80 chars.
         caption = text[:80]
-        # Use AV's batched SFT prompt with the caption, sample tokens
-        # We don't have a "generate from caption" method, so build one inline.
-        from av.stroke_decoder import SFT_PROMPT_TEMPLATE
-        from av.activation_injection import stroke_token_ids
+        from verbalizer.stroke_decoder import SFT_PROMPT_TEMPLATE
+        from verbalizer.activation_injection import stroke_token_ids
         from stroke_tokenizer import DRAW_CLOSE
         device = next(av.model.parameters()).device
         prompt = SFT_PROMPT_TEMPLATE.format(caption=caption)
         prompt_ids = av.tokenizer(prompt, return_tensors="pt", add_special_tokens=True)["input_ids"].to(device)
         allowed = set(stroke_token_ids(av.vocab))
+        allowed_ids = torch.tensor(list(allowed), device=device)
         gen_ids: list[int] = []
         past = None
         cur_ids = prompt_ids
-        for _ in range(400):
+        for _ in range(300):
             if past is None:
                 out = av.model(input_ids=cur_ids, use_cache=True)
             else:
@@ -138,7 +121,6 @@ def main():
             past = out.past_key_values
             logits = out.logits[:, -1, :]
             mask = torch.full_like(logits, float("-inf"))
-            allowed_ids = torch.tensor(list(allowed), device=device)
             mask[0, allowed_ids] = 0
             logits = logits + mask
             probs = torch.softmax(logits / 1.0, dim=-1)
@@ -189,13 +171,11 @@ def main():
             if step % args.save_every == 0 and step > 0:
                 save_dir = args.out_dir / f"L{args.layer:02d}" / f"step_{step:06d}"
                 save_dir.mkdir(parents=True, exist_ok=True)
-                ar.backbone.save_pretrained(save_dir / "lora")
                 torch.save(ar.linear.state_dict(), save_dir / "linear.pt")
                 print(f"[ar-sup] saved → {save_dir}", flush=True)
 
     final = args.out_dir / f"L{args.layer:02d}" / "final"
     final.mkdir(parents=True, exist_ok=True)
-    ar.backbone.save_pretrained(final / "lora")
     torch.save(ar.linear.state_dict(), final / "linear.pt")
     print(f"[ar-sup] DONE → {final}", flush=True)
 

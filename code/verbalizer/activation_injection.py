@@ -9,8 +9,8 @@ embedding row.
 Usage
 -----
     from transformers import AutoModelForCausalLM, AutoTokenizer
-    from av.vocab_extend import extend_model_and_tokenizer
-    from av.activation_injection import build_prompt_with_activation
+    from verbalizer.vocab_extend import extend_model_and_tokenizer
+    from verbalizer.activation_injection import build_prompt_with_activation
 
     model = AutoModelForCausalLM.from_pretrained(...)
     tok = AutoTokenizer.from_pretrained(...)

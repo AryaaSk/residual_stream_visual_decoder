@@ -34,17 +34,16 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from ar.reconstructor import TruncatedGemmaAR  # noqa: E402
-from av.activation_injection import build_prompt_with_activation, stroke_token_ids  # noqa: E402
-from av.stroke_decoder import INJECT_PROMPT_TEMPLATE, StrokeDecoder  # noqa: E402
+from verbalizer.activation_injection import build_prompt_with_activation, stroke_token_ids  # noqa: E402
+from verbalizer.stroke_decoder import INJECT_PROMPT_TEMPLATE, StrokeDecoder  # noqa: E402
 from render import render as stroke_render  # noqa: E402
 from stroke_tokenizer import DRAW_CLOSE, StrokeVocab  # noqa: E402
 
 
 @torch.no_grad()
 def load_ar_from_ckpt(ar_ckpt_dir: Path, model_id: str, layer_ell: int) -> TruncatedGemmaAR:
-    from peft import PeftModel
+    """Load AR: full Gemma 4 + Linear(d,d) head with weights from `linear.pt`."""
     ar = TruncatedGemmaAR.from_pretrained(model_id, layer_ell=layer_ell, device="cuda")
-    ar.backbone = PeftModel.from_pretrained(ar.backbone, str(ar_ckpt_dir / "lora"))
     linear_sd = torch.load(ar_ckpt_dir / "linear.pt", map_location="cuda")
     ar.linear.load_state_dict(linear_sd)
     ar.eval()
@@ -53,14 +52,9 @@ def load_ar_from_ckpt(ar_ckpt_dir: Path, model_id: str, layer_ell: int) -> Trunc
     return ar
 
 
-@torch.no_grad()
 def load_av_from_ckpt(av_ckpt_dir: Path, model_id: str) -> StrokeDecoder:
-    from peft import PeftModel
-    av = StrokeDecoder.from_pretrained_and_extend(model_id, device="cuda", dtype=torch.bfloat16)
-    saved_vocab = torch.load(av_ckpt_dir / "stroke_vocab.pt", weights_only=False)
-    av.vocab = StrokeVocab.from_new_vocab(saved_vocab["vocab_name_to_id"]) if hasattr(StrokeVocab, "from_new_vocab") else StrokeVocab.from_name_to_id(saved_vocab["vocab_name_to_id"])
-    av.model = PeftModel.from_pretrained(av.model, str(av_ckpt_dir))
-    return av
+    """Load AV from Stage-1 av_ckpt.pt (Anole-minimal: just new embedding rows)."""
+    return StrokeDecoder.from_ckpt(av_ckpt_dir, model_id=model_id, device="cuda", dtype=torch.bfloat16)
 
 
 def sample_drawing_with_logprobs(
@@ -116,13 +110,8 @@ def sample_drawing_with_logprobs(
     return torch.tensor(generated_ids, device=device, dtype=torch.long), torch.stack(log_probs, dim=0)
 
 
-def reward_from_activations(h_true: torch.Tensor, h_hat: torch.Tensor) -> float:
-    """Reward = -log(MSE + eps)."""
-    mse = F.mse_loss(h_true.float(), h_hat.float()).item()
-    return float(-((mse + 1e-6) ** 0.5).__class__(0).__init__ or -torch.log(torch.tensor(mse + 1e-6)).item())
-
-
 def reward_from_activations_robust(h_true: torch.Tensor, h_hat: torch.Tensor) -> float:
+    """Reward = -log(MSE + eps)."""
     mse = F.mse_loss(h_true.float(), h_hat.float()).item()
     return float(-torch.log(torch.tensor(mse + 1e-6)).item())
 

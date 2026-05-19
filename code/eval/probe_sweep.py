@@ -20,7 +20,7 @@ import torch
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from av.stroke_decoder import StrokeDecoder  # noqa: E402
+from verbalizer.stroke_decoder import StrokeDecoder  # noqa: E402
 from render import render as stroke_render  # noqa: E402
 from stroke_tokenizer import StrokeVocab  # noqa: E402
 
@@ -121,13 +121,9 @@ def main():
     with open(layer_dir / "probes.json", "w") as f:
         json.dump(probes, f, indent=2)
 
-    # Load AV (with vocab extension + LoRA from checkpoint)
+    # Load AV from Stage-1 av_ckpt.pt format (Anole-minimal: just new embedding rows)
     print(f"[probe] loading AV from {args.av_ckpt}", flush=True)
-    av = StrokeDecoder.from_pretrained_and_extend(args.model_id, device="cuda", dtype=torch.bfloat16)
-    saved_vocab = torch.load(args.av_ckpt / "stroke_vocab.pt", weights_only=False)
-    av.vocab = StrokeVocab.from_name_to_id(saved_vocab["vocab_name_to_id"])
-    from peft import PeftModel
-    av.model = PeftModel.from_pretrained(av.model, args.av_ckpt)
+    av = StrokeDecoder.from_ckpt(args.av_ckpt, model_id=args.model_id, device="cuda", dtype=torch.bfloat16)
     av.model.eval()
 
     # Use the target model (Gemma 4 without vocab extension) to extract clean h_ℓ.
