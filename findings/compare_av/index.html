@@ -1,0 +1,85 @@
+<!doctype html><html><head><meta charset='utf-8'>
+<title>AV comparison — layer 16</title>
+<style>
+body { font-family: -apple-system, sans-serif; max-width: 1200px; margin: 2em auto; padding: 0 1em; }
+table { width: 100%; border-collapse: collapse; }
+th, td { border: 1px solid #ddd; padding: 0.5em; vertical-align: top; }
+th { background: #f7f7f7; }
+.prompt { font-size: 13px; color: #444; }
+.stats { font-size: 11px; color: #888; }
+img, video { width: 200px; background: #fff; border: 1px solid #eee; }
+</style></head><body>
+<h1>AV comparison — layer 16</h1>
+<p>For each prompt, h_ℓ extracted from Gemma 4 E2B at layer 16, then injected into each AV via embedding-layer hook.</p>
+<table>
+<tr><th>Prompt</th><th>Stage1_SFT (PNG / MP4)</th><th>Stage3_GRPO (PNG / MP4)</th></tr>
+<tr>
+  <td><b>capital_france</b><br><span class='prompt'>The capital of France is</span></td>
+  <td><img src='capital_france_A_4x.png'><br><video src='capital_france_A_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=71, tokens=300, malformed=86 · <a href='capital_france_A.png'>native 224px</a></span></td>
+  <td><img src='capital_france_B_4x.png'><br><video src='capital_france_B_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=12, tokens=300, malformed=264 · <a href='capital_france_B.png'>native 224px</a></span></td>
+</tr>
+<tr>
+  <td><b>smile</b><br><span class='prompt'>She smiled brightly at the surprise.</span></td>
+  <td><img src='smile_A_4x.png'><br><video src='smile_A_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=2, tokens=101, malformed=94 · <a href='smile_A.png'>native 224px</a></span></td>
+  <td><img src='smile_B_4x.png'><br><video src='smile_B_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=13, tokens=60, malformed=20 · <a href='smile_B.png'>native 224px</a></span></td>
+</tr>
+<tr>
+  <td><b>dog</b><br><span class='prompt'>I am thinking about a dog.</span></td>
+  <td><img src='dog_A_4x.png'><br><video src='dog_A_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=6, tokens=40, malformed=21 · <a href='dog_A.png'>native 224px</a></span></td>
+  <td><img src='dog_B_4x.png'><br><video src='dog_B_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=24, tokens=277, malformed=204 · <a href='dog_B.png'>native 224px</a></span></td>
+</tr>
+<tr>
+  <td><b>triangle</b><br><span class='prompt'>Imagine a triangle inscribed in a circle.</span></td>
+  <td><img src='triangle_A_4x.png'><br><video src='triangle_A_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=34, tokens=131, malformed=28 · <a href='triangle_A.png'>native 224px</a></span></td>
+  <td><img src='triangle_B_4x.png'><br><video src='triangle_B_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=14, tokens=76, malformed=33 · <a href='triangle_B.png'>native 224px</a></span></td>
+</tr>
+<tr>
+  <td><b>storm</b><br><span class='prompt'>When the storm hit, the village</span></td>
+  <td><img src='storm_A_4x.png'><br><video src='storm_A_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=2, tokens=17, malformed=10 · <a href='storm_A.png'>native 224px</a></span></td>
+  <td><img src='storm_B_4x.png'><br><video src='storm_B_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=3, tokens=42, malformed=32 · <a href='storm_B.png'>native 224px</a></span></td>
+</tr>
+<tr>
+  <td><b>paris</b><br><span class='prompt'>Paris, the city of lights, is famous for the Eiffel</span></td>
+  <td><img src='paris_A_4x.png'><br><video src='paris_A_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=13, tokens=109, malformed=69 · <a href='paris_A.png'>native 224px</a></span></td>
+  <td><img src='paris_B_4x.png'><br><video src='paris_B_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=42, tokens=234, malformed=107 · <a href='paris_B.png'>native 224px</a></span></td>
+</tr>
+<tr>
+  <td><b>math</b><br><span class='prompt'>What is 47 + 38? The answer is</span></td>
+  <td><img src='math_A_4x.png'><br><video src='math_A_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=0, tokens=300, malformed=298 · <a href='math_A.png'>native 224px</a></span></td>
+  <td><img src='math_B_4x.png'><br><video src='math_B_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=63, tokens=244, malformed=50 · <a href='math_B.png'>native 224px</a></span></td>
+</tr>
+<tr>
+  <td><b>emotion</b><br><span class='prompt'>She received the news and felt deeply</span></td>
+  <td><img src='emotion_A_4x.png'><br><video src='emotion_A_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=43, tokens=167, malformed=37 · <a href='emotion_A.png'>native 224px</a></span></td>
+  <td><img src='emotion_B_4x.png'><br><video src='emotion_B_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=6, tokens=300, malformed=282 · <a href='emotion_B.png'>native 224px</a></span></td>
+</tr>
+<tr>
+  <td><b>code</b><br><span class='prompt'>def fibonacci(n):</span></td>
+  <td><img src='code_A_4x.png'><br><video src='code_A_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=0, tokens=300, malformed=300 · <a href='code_A.png'>native 224px</a></span></td>
+  <td><img src='code_B_4x.png'><br><video src='code_B_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=9, tokens=300, malformed=273 · <a href='code_B.png'>native 224px</a></span></td>
+</tr>
+<tr>
+  <td><b>face</b><br><span class='prompt'>I am picturing a smiling face.</span></td>
+  <td><img src='face_A_4x.png'><br><video src='face_A_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=8, tokens=300, malformed=276 · <a href='face_A.png'>native 224px</a></span></td>
+  <td><img src='face_B_4x.png'><br><video src='face_B_4x.mp4' controls muted loop></video><br>
+      <span class='stats'>strokes=13, tokens=255, malformed=215 · <a href='face_B.png'>native 224px</a></span></td>
+</tr></table></body></html>
