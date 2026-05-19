@@ -145,60 +145,88 @@ class StrokeDecoder:
         top_k: int = 0,
         constrain_to_stroke_vocab: bool = True,
     ) -> torch.Tensor:
-        """Inject the activation, autoregressively sample stroke tokens.
+        """Inject the activation via embedding-layer forward hook, then sample stroke tokens.
+
+        Gemma 4 doesn't allow passing both input_ids and inputs_embeds, and it
+        verifies that any inputs_embeds you pass matches the embedding table (so
+        it can recover input_ids). Our trick: pass input_ids normally, and use a
+        forward hook on the embedding layer to OVERWRITE the embedding row at
+        the <ACT_TOKEN> position with alpha * activation.
 
         Returns a 1-D LongTensor of token ids (not including the prompt).
-        Generation stops on </DRAW> or after `max_new_tokens`.
         """
-        parts = build_prompt_with_activation(
-            self.model, self.tokenizer, self.vocab,
-            layer_ell=layer_ell, activation=activation, alpha=alpha,
-            prompt_template=INJECT_PROMPT_TEMPLATE,
-        )
-        # We sample directly rather than using model.generate(), so we have full
-        # control over how the activation-injected embeds are fed and how we
-        # constrain to the stroke vocabulary.
-        draw_close_id = self.vocab.name_to_id[DRAW_CLOSE]
-        pen_end_id = self.vocab.name_to_id[self.vocab.id_to_name[self.vocab.name_to_id[DRAW_OPEN]]]  # noqa: unused — readability
-        allowed = set(stroke_token_ids(self.vocab)) if constrain_to_stroke_vocab else None
-
         device = self.device()
-        inputs_embeds = parts.inputs_embeds
-        input_ids = parts.input_ids
+        if activation.ndim != 1:
+            raise ValueError(f"activation must be 1-D, got {tuple(activation.shape)}")
+
+        # Build prompt as input_ids (no embedding surgery here)
+        act_token_id = self.vocab.name_to_id[ACT_TOKEN]
+        text = INJECT_PROMPT_TEMPLATE.format(layer=layer_ell, act=ACT_TOKEN)
+        enc = self.tokenizer(text, return_tensors="pt", add_special_tokens=True).to(device)
+        input_ids = enc["input_ids"]
+        pos_mask = input_ids[0] == act_token_id
+        if not pos_mask.any():
+            raise RuntimeError("<ACT_TOKEN> not found in tokenised prompt")
+        act_position = int(pos_mask.nonzero(as_tuple=False).item())
+
+        # Register a forward hook on the embedding layer that overwrites the
+        # row at act_position on the FIRST forward pass (when sequence length
+        # includes act_position). On subsequent (single-token) passes the hook
+        # is a no-op.
+        embed_layer = self.model.get_input_embeddings()
+        scaled_activation = (activation.to(device=device, dtype=embed_layer.weight.dtype) * alpha)
+        first_pass_done = {"done": False}
+
+        def embed_hook(module, inputs, output):
+            seq_len = output.shape[1]
+            if not first_pass_done["done"] and seq_len > act_position:
+                output = output.clone()
+                output[0, act_position, :] = scaled_activation
+                first_pass_done["done"] = True
+            return output
+
+        hook_handle = embed_layer.register_forward_hook(embed_hook)
+
+        draw_close_id = self.vocab.name_to_id[DRAW_CLOSE]
+        allowed = set(stroke_token_ids(self.vocab)) if constrain_to_stroke_vocab else None
+        allowed_ids = torch.tensor(list(allowed), device=device) if allowed is not None else None
+
         past_key_values = None
+        cur_input_ids = input_ids
         generated: list[int] = []
 
-        for step in range(max_new_tokens):
-            if past_key_values is None:
-                out = self.model(inputs_embeds=inputs_embeds, use_cache=True)
-            else:
-                # feed only the latest token's embed
-                last_id = generated[-1]
-                last_embed = self.model.get_input_embeddings()(
-                    torch.tensor([[last_id]], device=device)
-                )
-                out = self.model(inputs_embeds=last_embed, past_key_values=past_key_values, use_cache=True)
+        try:
+            for step in range(max_new_tokens):
+                if past_key_values is None:
+                    out = self.model(input_ids=cur_input_ids, use_cache=True)
+                else:
+                    out = self.model(
+                        input_ids=cur_input_ids,
+                        past_key_values=past_key_values,
+                        use_cache=True,
+                    )
+                logits = out.logits[:, -1, :]
+                past_key_values = out.past_key_values
 
-            logits = out.logits[:, -1, :]  # (1, vocab)
-            past_key_values = out.past_key_values
+                if allowed is not None:
+                    mask = torch.full_like(logits, float("-inf"))
+                    mask[0, allowed_ids] = 0.0
+                    logits = logits + mask
+                if temperature != 1.0:
+                    logits = logits / temperature
+                if top_k > 0:
+                    kth_value = torch.topk(logits, top_k, dim=-1).values[:, -1:]
+                    logits = torch.where(logits < kth_value, torch.full_like(logits, float("-inf")), logits)
+                probs = torch.softmax(logits, dim=-1)
+                next_id = int(torch.multinomial(probs, num_samples=1).item())
+                generated.append(next_id)
 
-            if allowed is not None:
-                mask = torch.full_like(logits, float("-inf"))
-                allowed_ids = torch.tensor(list(allowed), device=device)
-                mask[0, allowed_ids] = 0.0
-                logits = logits + mask
+                if next_id == draw_close_id:
+                    break
 
-            if temperature != 1.0:
-                logits = logits / temperature
-            if top_k > 0:
-                kth_value = torch.topk(logits, top_k, dim=-1).values[:, -1:]
-                logits = torch.where(logits < kth_value, torch.full_like(logits, float("-inf")), logits)
-            probs = torch.softmax(logits, dim=-1)
-            next_id = int(torch.multinomial(probs, num_samples=1).item())
-            generated.append(next_id)
-
-            if next_id == draw_close_id:
-                break
+                cur_input_ids = torch.tensor([[next_id]], device=device)
+        finally:
+            hook_handle.remove()
 
         return torch.tensor(generated, dtype=torch.long)
 
