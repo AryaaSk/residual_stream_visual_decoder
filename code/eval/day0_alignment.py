@@ -60,23 +60,19 @@ CONCEPTS = [
     "circle", "triangle", "square", "arrow", "heart", "smile",
     "France", "England", "Japan", "Africa",
     "fire", "water", "wind", "snow", "ice",
-    "music", "love", "fear",
+    "music", "love",
 ]
 assert len(CONCEPTS) == 100, f"Expected 100 concepts, got {len(CONCEPTS)}"
 
 
-def render_concept_sketch(concept: str, size: int = 224) -> Image.Image:
-    """Cheap procedural placeholder sketch.
+def render_concept_sketch_procedural(concept: str, size: int = 224) -> Image.Image:
+    """Fallback procedural sketch (NOT actual concept depiction).
 
-    Day-0 is about whether the model represents *images* and *text* of the same
-    concept similarly. The actual visual quality of the sketch doesn't matter
-    too much for this measurement: what matters is that the sketch is
-    deterministic, consistent across runs, and visually distinguishable across
-    concepts.
-
-    We use a hash of the concept name to seed a tiny shape generator. Each
-    concept gets a different small set of strokes. Future enhancement: use
-    a real QuickDraw sample if available.
+    Generates random strokes seeded by concept name. Used only when no
+    QuickDraw data is available. Empirically: with these sketches the cross-modal
+    alignment delta is near zero, because the model can't recognise concepts
+    in random scribbles. Use ``render_concept_quickdraw`` instead whenever
+    possible.
     """
     img = Image.new("L", (size, size), color=255)
     draw = ImageDraw.Draw(img)
@@ -92,6 +88,39 @@ def render_concept_sketch(concept: str, size: int = 224) -> Image.Image:
         y1 = int(np.clip(y1, 0, size - 1))
         draw.line([(x0, y0), (x1, y1)], fill=0, width=2)
     return img
+
+
+def render_concept_quickdraw(concept: str, quickdraw_dir: Path, size: int = 224, seed: int = 0) -> Image.Image | None:
+    """Render an actual QuickDraw sketch of `concept` as a 224×224 grayscale PNG.
+
+    Looks up `<quickdraw_dir>/<concept>.ndjson`, picks a deterministic sample
+    (recognized=True if possible), and converts to our renderer's format using
+    the QuickDraw → stroke-5 → render pipeline.
+    """
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from data.quickdraw_loader import quickdraw_strokes_to_stroke5, stream_quickdraw_ndjson
+    from render import render as stroke_render
+
+    ndjson_path = quickdraw_dir / f"{concept}.ndjson"
+    if not ndjson_path.exists():
+        return None
+    samples = list(stream_quickdraw_ndjson(ndjson_path, max_per_file=100))
+    if not samples:
+        return None
+    obj = samples[seed % len(samples)]
+    strokes = quickdraw_strokes_to_stroke5(obj["drawing"], target_size=size)
+    img = stroke_render(strokes, canvas_size=size)
+    return img
+
+
+def render_concept_sketch(concept: str, size: int = 224, quickdraw_dir: Path | None = None) -> Image.Image:
+    """Render an image of `concept`. Uses QuickDraw if available, otherwise procedural fallback."""
+    if quickdraw_dir is not None:
+        img = render_concept_quickdraw(concept, quickdraw_dir, size=size)
+        if img is not None:
+            return img
+    return render_concept_sketch_procedural(concept, size=size)
 
 
 def load_model_and_processor(model_id: str, device: str = "cuda"):
@@ -161,6 +190,10 @@ def main():
     parser.add_argument("--output-dir", default="findings")
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--limit", type=int, default=None, help="Use only first N concepts (for quick smoke test)")
+    parser.add_argument("--quickdraw-dir", type=Path, default=Path("data/quickdraw"),
+                        help="Directory containing per-concept QuickDraw NDJSON files. If files exist, use real sketches; else fall back to procedural.")
+    parser.add_argument("--n-image-samples", type=int, default=3,
+                        help="Average over this many different QuickDraw samples per concept (averaged image activation).")
     args = parser.parse_args()
 
     output_dir = Path(args.output_dir)
@@ -176,6 +209,9 @@ def main():
     text_acts: list[torch.Tensor] = []
     image_acts: list[torch.Tensor] = []
 
+    quickdraw_dir = args.quickdraw_dir if args.quickdraw_dir.exists() else None
+    print(f"[day0] image source: {'QuickDraw at ' + str(quickdraw_dir) if quickdraw_dir else 'PROCEDURAL FALLBACK (low signal expected)'}", flush=True)
+
     for i, concept in enumerate(concepts):
         print(f"[day0] {i+1:3d}/{len(concepts)}: {concept}", flush=True)
         text_input = f"I am thinking about a {concept}."
@@ -185,9 +221,22 @@ def main():
             print(f"  TEXT FAIL: {e}", flush=True)
             text_acts.append(None)
 
-        sketch = render_concept_sketch(concept)
+        # Average activations over multiple QuickDraw samples to reduce per-sample noise
         try:
-            image_acts.append(extract_image_residuals(model, processor, sketch, device=args.device))
+            stacked = None
+            n_used = 0
+            for k in range(args.n_image_samples):
+                if quickdraw_dir is not None:
+                    sketch = render_concept_quickdraw(concept, quickdraw_dir, seed=k)
+                    if sketch is None:
+                        sketch = render_concept_sketch_procedural(concept)
+                else:
+                    sketch = render_concept_sketch_procedural(concept)
+                act = extract_image_residuals(model, processor, sketch, device=args.device)
+                stacked = act if stacked is None else stacked + act
+                n_used += 1
+            avg_act = stacked / max(1, n_used) if stacked is not None else None
+            image_acts.append(avg_act)
         except Exception as e:
             print(f"  IMAGE FAIL: {e}", flush=True)
             image_acts.append(None)

@@ -83,12 +83,16 @@ case "$cmd" in
     ;;
 
   bg)
-    # Run a command on remote in a detached tmux so it survives disconnect
-    name=${1:?usage: bin/h200 bg <session_name> <command>}
+    # Run a script on remote in a detached tmux so it survives disconnect.
+    # Args: <session_name> <script-relative-to-code/> [args...]
+    name=${1:?usage: bin/h200 bg <session_name> <script.py> [args...]}
     shift
-    cmd_str="$*"
+    script=${1:?missing script}
+    shift
+    extra_args="$*"
     "$0" sync
-    "${SSH[@]}" "tmux new-session -d -s $name 'cd $REMOTE_DIR && CUDA_VISIBLE_DEVICES=$H200_GPU PYTHONPATH=code $cmd_str |& tee runs/${name}.log'"
+    "${SSH[@]}" "mkdir -p $REMOTE_DIR/runs"
+    "${SSH[@]}" "tmux new-session -d -s $name 'cd $REMOTE_DIR && CUDA_VISIBLE_DEVICES=$H200_GPU PYTHONPATH=code $H200_PYTHON code/$script $extra_args 2>&1 | tee runs/${name}.log; echo EXIT_CODE=\$?; sleep 60'"
     echo "Started tmux session '$name' on remote. Tail with: bin/h200 exec 'tail -f runs/${name}.log'"
     ;;
 
