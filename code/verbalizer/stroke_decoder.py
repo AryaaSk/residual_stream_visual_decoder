@@ -24,6 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from verbalizer.activation_injection import build_prompt_with_activation, stroke_token_ids  # noqa: E402
+from verbalizer.projector import ActProjector  # noqa: E402
 from stroke_tokenizer import ACT_TOKEN, DRAW_CLOSE, DRAW_OPEN, PEN_END, StrokeVocab  # noqa: E402
 
 
@@ -40,13 +41,19 @@ DEFAULT_ALPHA = 0.5
 
 @dataclass
 class StrokeDecoder:
-    """Container holding the model, tokenizer, and vocab.
+    """Container holding the model, tokenizer, vocab, and optional activation projector.
 
     Use ``StrokeDecoder.from_pretrained_and_extend(...)`` to set everything up.
+
+    ``act_projector`` (optional ``ActProjector``): if present, projects the injected
+    activation through a learnable Linear before overwriting the <ACT_TOKEN>
+    embedding row. Init as α·I so v1.1 behaviour is recovered when untrained.
+    Set ``act_projector=None`` to fall back to raw α·h injection (v1.1 behaviour).
     """
     model: object  # PreTrainedModel
     tokenizer: object
     vocab: StrokeVocab
+    act_projector: ActProjector | None = None
 
     @classmethod
     def from_pretrained_and_extend(
@@ -54,13 +61,19 @@ class StrokeDecoder:
         model_id: str = "google/gemma-4-e2b-it",
         device: str = "cuda",
         dtype: torch.dtype = torch.bfloat16,
+        use_projector: bool = False,
+        projector_alpha_init: float = 0.5,
     ) -> "StrokeDecoder":
         from transformers import AutoModelForCausalLM, AutoTokenizer
         from verbalizer.vocab_extend import extend_model_and_tokenizer
         model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=dtype, attn_implementation="sdpa").to(device)
         tok = AutoTokenizer.from_pretrained(model_id)
         vocab = extend_model_and_tokenizer(model, tok)
-        return cls(model=model, tokenizer=tok, vocab=vocab)
+        d = model.config.text_config.hidden_size if hasattr(model.config, "text_config") else model.config.hidden_size
+        proj = None
+        if use_projector:
+            proj = ActProjector(d=d, alpha_init=projector_alpha_init, dtype=dtype, device=device)
+        return cls(model=model, tokenizer=tok, vocab=vocab, act_projector=proj)
 
     @classmethod
     def from_ckpt(
@@ -70,15 +83,22 @@ class StrokeDecoder:
         device: str = "cuda",
         dtype: torch.dtype = torch.bfloat16,
     ) -> "StrokeDecoder":
-        """Load Stage-1 checkpoint: backbone fresh, only the new-vocab embedding rows are loaded.
+        """Load AV checkpoint (Stage 1, Stage 1.5, or Stage 4 format).
 
-        The Stage-1 SFT script saves only the new embedding rows + the vocab name->id
-        mapping in `av_ckpt.pt`. We rebuild the full model and overwrite those rows.
+        Backward-compatible with Stage 1 ckpts that only contain new-vocab rows
+        plus the vocab mapping. Stage 1.5+ checkpoints may also include:
+          - ``projector_state``: state dict for an ActProjector (loaded → ``self.act_projector``)
+          - ``lora_state``: AV LoRA A/B tensors (requires LoRA to have been attached;
+            call ``attach_lora_to_av`` before loading if your ckpt has this)
         """
         from pathlib import Path as _Path
-        instance = cls.from_pretrained_and_extend(model_id, device=device, dtype=dtype)
         ckpt_file = _Path(av_ckpt_dir) / "av_ckpt.pt"
         ckpt = torch.load(ckpt_file, weights_only=False)
+        has_proj = "projector_state" in ckpt
+        instance = cls.from_pretrained_and_extend(
+            model_id, device=device, dtype=dtype,
+            use_projector=has_proj,
+        )
         instance.vocab = StrokeVocab.from_name_to_id(ckpt["vocab_name_to_id"])
         old_vocab = int(ckpt["old_vocab_size"])
         new_rows = ckpt["new_embed_rows"]
@@ -87,6 +107,21 @@ class StrokeDecoder:
             embed.weight.data[old_vocab : old_vocab + new_rows.shape[0]] = new_rows.to(
                 device=embed.weight.device, dtype=embed.weight.dtype
             )
+        if has_proj:
+            instance.act_projector = ActProjector.from_state(
+                ckpt["projector_state"], dtype=dtype, device=device,
+            )
+        if "lora_state" in ckpt:
+            from ar.lora_gemma4 import attach_lora_to_av, load_lora_state
+            lora_meta = ckpt.get("lora_meta", {"first_n_layers": 8, "rank": 16, "alpha": 32})
+            attach_lora_to_av(
+                instance,
+                first_n_layers=int(lora_meta.get("first_n_layers", 8)),
+                rank=int(lora_meta.get("rank", 16)),
+                alpha=int(lora_meta.get("alpha", 32)),
+                verbose=False,
+            )
+            load_lora_state(instance, ckpt["lora_state"])
         return instance
 
     def device(self):
@@ -138,6 +173,113 @@ class StrokeDecoder:
         out = self.model(input_ids=input_ids, attention_mask=attention_mask, labels=labels, use_cache=False)
         return out.loss
 
+    # ------- Stage 1.5: activation-conditioned SFT (supervised) -------
+
+    def act_sft_loss_batched(
+        self,
+        activations: torch.Tensor,                # (B, d) — caller pre-extracts h_ℓ
+        target_stroke_ids_list: list[list[int]],  # per-example drawing token ids
+        layer_ell: int,
+        pad_id: int | None = None,
+    ) -> torch.Tensor:
+        """Activation-conditioned teacher-forced cross-entropy.
+
+        Builds prompt `"Visualize the following thought from layer ℓ: <ACT_TOKEN> <DRAW>" + drawing_tokens`
+        for each example, hooks the embedding layer to overwrite the <ACT_TOKEN>
+        row with `projector(h)` (or `alpha·h` if no projector), and computes CE
+        loss on drawing tokens only (prompt masked with -100).
+
+        Unlike `generate_from_activation`, this runs WITH GRAD so the projector,
+        AV LoRA, and new-vocab rows can be optimised. Caller is responsible
+        for ensuring requires_grad is set correctly.
+        """
+        device = self.device()
+        if pad_id is None:
+            pad_id = self.tokenizer.pad_token_id if self.tokenizer.pad_token_id is not None else self.tokenizer.eos_token_id
+
+        B, d = activations.shape
+        if B != len(target_stroke_ids_list):
+            raise ValueError(f"activations B={B} != targets B={len(target_stroke_ids_list)}")
+
+        act_token_id = self.vocab.name_to_id[ACT_TOKEN]
+        prompt_text = INJECT_PROMPT_TEMPLATE.format(layer=layer_ell, act=ACT_TOKEN)
+        prompt_ids = self.tokenizer(prompt_text, add_special_tokens=True)["input_ids"]
+        # Find act position in the prompt (same for all examples since prompt is fixed)
+        act_pos = next(i for i, tid in enumerate(prompt_ids) if tid == act_token_id)
+        prompt_len = len(prompt_ids)
+
+        full_seqs = [prompt_ids + t for t in target_stroke_ids_list]
+        max_len = max(len(s) for s in full_seqs)
+
+        input_ids = torch.full((B, max_len), pad_id, dtype=torch.long, device=device)
+        labels = torch.full((B, max_len), -100, dtype=torch.long, device=device)
+        attention_mask = torch.zeros((B, max_len), dtype=torch.long, device=device)
+        for i, (p, t) in enumerate(zip([prompt_ids] * B, target_stroke_ids_list)):
+            seq = p + t
+            input_ids[i, :len(seq)] = torch.tensor(seq, device=device)
+            attention_mask[i, :len(seq)] = 1
+            labels[i, prompt_len:len(seq)] = torch.tensor(t, device=device)
+
+        # Project (or scale) all activations
+        embed_layer = self.model.get_input_embeddings()
+        h_dev = activations.to(device=device, dtype=embed_layer.weight.dtype)
+        if self.act_projector is not None:
+            injected = self.act_projector(h_dev)  # (B, d) — grad flows
+        else:
+            injected = h_dev * DEFAULT_ALPHA
+
+        # Forward-hook: overwrite act_pos column for every batch row, first pass only.
+        first_pass_done = {"done": False}
+
+        def embed_hook(module, inputs, output):
+            seq_len = output.shape[1]
+            if not first_pass_done["done"] and seq_len > act_pos:
+                output = output.clone()
+                output[:, act_pos, :] = injected
+                first_pass_done["done"] = True
+            return output
+
+        hook_handle = embed_layer.register_forward_hook(embed_hook)
+        try:
+            out = self.model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                labels=labels,
+                use_cache=False,
+            )
+        finally:
+            hook_handle.remove()
+        return out.loss
+
+    # ------- Stage 1.5+: save/load with projector + LoRA -------
+
+    def save_ckpt(self, out_dir, *, include_lora_meta: dict | None = None) -> None:
+        """Save AV state to `<out_dir>/av_ckpt.pt`.
+
+        Always includes: new_embed_rows, old_vocab_size, vocab_name_to_id.
+        Includes if present: projector_state, lora_state.
+        """
+        from pathlib import Path as _Path
+        out_dir = _Path(out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        embed = self.model.get_input_embeddings()
+        old_vocab = embed.weight.shape[0] - len(self.vocab.name_to_id)
+        ckpt = {
+            "new_embed_rows": embed.weight.detach()[old_vocab:].cpu().clone(),
+            "old_vocab_size": old_vocab,
+            "vocab_name_to_id": self.vocab.name_to_id,
+        }
+        if self.act_projector is not None:
+            ckpt["projector_state"] = self.act_projector.state()
+        # LoRA state (if any LoRA modules are attached to the model)
+        from ar.lora_gemma4 import lora_state_dict
+        ls = lora_state_dict(self)
+        if ls:
+            ckpt["lora_state"] = ls
+            if include_lora_meta is not None:
+                ckpt["lora_meta"] = include_lora_meta
+        torch.save(ckpt, out_dir / "av_ckpt.pt")
+
     # ------- Stage 3 / inference: activation → strokes -------
 
     @torch.no_grad()
@@ -180,15 +322,24 @@ class StrokeDecoder:
         # row at act_position on the FIRST forward pass (when sequence length
         # includes act_position). On subsequent (single-token) passes the hook
         # is a no-op.
+        #
+        # When self.act_projector is set (Stage 1.5+), the projector handles
+        # both the scale and any learned activation→embedding mapping; alpha is
+        # then ignored. When act_projector is None (v1.1 behaviour), inject
+        # alpha·h directly.
         embed_layer = self.model.get_input_embeddings()
-        scaled_activation = (activation.to(device=device, dtype=embed_layer.weight.dtype) * alpha)
+        h_dev = activation.to(device=device, dtype=embed_layer.weight.dtype)
+        if self.act_projector is not None:
+            injected = self.act_projector(h_dev)
+        else:
+            injected = h_dev * alpha
         first_pass_done = {"done": False}
 
         def embed_hook(module, inputs, output):
             seq_len = output.shape[1]
             if not first_pass_done["done"] and seq_len > act_position:
                 output = output.clone()
-                output[0, act_position, :] = scaled_activation
+                output[0, act_position, :] = injected
                 first_pass_done["done"] = True
             return output
 

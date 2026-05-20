@@ -111,42 +111,40 @@ def _module_kind_from_name(name: str) -> str:
     return "other"
 
 
-def attach_lora_to_ar(
-    ar,
-    layer_ell: int,
-    rank: int = 16,
-    alpha: int = 32,
-    targets: Iterable[str] = ("q_proj", "k_proj", "v_proj", "o_proj"),
-    include_vision_tower: bool = True,
-    include_language_first_ell: bool = True,
-    verbose: bool = True,
+def _attach_lora_walk(
+    root,
+    *,
+    rank: int,
+    alpha: int,
+    targets: Iterable[str],
+    include_vision_tower: bool,
+    include_language_first_ell: bool,
+    language_layer_limit: int | None,
+    accept_classes: Iterable[str],
+    verbose: bool,
 ) -> list[LoRADelta]:
-    """Walk `ar.backbone` and attach a parallel LoRA branch to every matching Gemma4ClippableLinear.
+    """Generic walker shared by `attach_lora_to_ar` and `attach_lora_to_av`.
 
-    Modules matched:
-      * if `include_vision_tower`: all `vision_tower.encoder.layers.{i}.self_attn.{target}` modules
-      * if `include_language_first_ell`: `language_model.layers.{i}.self_attn.{target}` for i in [0, ℓ)
-        (the language layers whose residual stream the AR reads)
-
-    Returns the list of attached `LoRADelta` modules in deterministic insertion order.
-    Their parameters can be passed straight to an optimiser.
+    `accept_classes` is the set of class names that we attach to. For AR
+    (truncated Gemma 4 wrapped in our AR adapter) the vision/audio towers use
+    `Gemma4ClippableLinear`; for AV (Gemma4ForConditionalGeneration) the
+    language layers use plain `Linear`. We accept either.
     """
     attached: list[LoRADelta] = []
     skipped = 0
     seen: set[str] = set()
 
     target_set = set(targets)
+    accept_set = set(accept_classes)
 
-    # Choose a representative device/dtype from the backbone (first parameter we find)
-    p0 = next(ar.backbone.parameters())
+    p0 = next(root.parameters())
     target_dtype = p0.dtype
     target_device = p0.device
 
-    # Walk modules in deterministic (sorted) order
-    named_modules = sorted(ar.backbone.named_modules(), key=lambda kv: kv[0])
+    named_modules = sorted(root.named_modules(), key=lambda kv: kv[0])
 
     for name, module in named_modules:
-        if module.__class__.__name__ != "Gemma4ClippableLinear":
+        if module.__class__.__name__ not in accept_set:
             continue
         proj_name = name.rsplit(".", 1)[-1]
         if proj_name not in target_set:
@@ -159,7 +157,8 @@ def attach_lora_to_ar(
         if kind == "vision" and include_vision_tower:
             keep = True
         elif kind == "language" and include_language_first_ell:
-            if layer_idx is not None and layer_idx < layer_ell:
+            limit = language_layer_limit
+            if limit is None or (layer_idx is not None and layer_idx < limit):
                 keep = True
         if not keep:
             skipped += 1
@@ -168,7 +167,12 @@ def attach_lora_to_ar(
             continue
         seen.add(name)
 
-        inner: nn.Linear = module.linear
+        # Resolve the inner nn.Linear: Gemma4ClippableLinear wraps `self.linear`;
+        # plain nn.Linear is its own inner.
+        if hasattr(module, "linear") and isinstance(module.linear, nn.Linear):
+            inner = module.linear
+        else:
+            inner = module
         in_dim = inner.in_features
         out_dim = inner.out_features
 
@@ -199,37 +203,112 @@ def attach_lora_to_ar(
 
     if verbose:
         n_params = sum(p.numel() for m in attached for p in m.parameters())
+        classes_str = "+".join(sorted(accept_set))
         print(
-            f"[lora] attached LoRA(r={rank}, α={alpha}) to {len(attached)} Gemma4ClippableLinear modules; "
+            f"[lora] attached LoRA(r={rank}, α={alpha}) to {len(attached)} {classes_str} modules; "
             f"skipped {skipped}; total trainable LoRA params: {n_params / 1e6:.2f}M",
             flush=True,
         )
     return attached
 
 
-def lora_state_dict(ar) -> dict[str, torch.Tensor]:
-    """Collect a flat state-dict of all LoRA A and B tensors in `ar.backbone`.
+def attach_lora_to_ar(
+    ar,
+    layer_ell: int,
+    rank: int = 16,
+    alpha: int = 32,
+    targets: Iterable[str] = ("q_proj", "k_proj", "v_proj", "o_proj"),
+    include_vision_tower: bool = True,
+    include_language_first_ell: bool = True,
+    verbose: bool = True,
+) -> list[LoRADelta]:
+    """Walk `ar.backbone` and attach LoRA to attention projections.
 
-    Keys are `<qualified_module_name>.A` and `<qualified_module_name>.B`.
-    Suitable for `torch.save({"lora": lora_state_dict(ar), ...}, path)`.
+    Modules matched (in either Gemma4ClippableLinear or plain Linear form):
+      * if `include_vision_tower`: vision_tower.encoder.layers.{i}.self_attn.{target}
+      * if `include_language_first_ell`: language_model.layers.{i}.self_attn.{target} for i < ℓ
     """
+    return _attach_lora_walk(
+        ar.backbone,
+        rank=rank, alpha=alpha,
+        targets=targets,
+        include_vision_tower=include_vision_tower,
+        include_language_first_ell=include_language_first_ell,
+        language_layer_limit=layer_ell,
+        accept_classes=("Gemma4ClippableLinear", "Linear"),
+        verbose=verbose,
+    )
+
+
+def attach_lora_to_av(
+    av,
+    first_n_layers: int = 8,
+    rank: int = 16,
+    alpha: int = 32,
+    targets: Iterable[str] = ("q_proj", "k_proj", "v_proj", "o_proj"),
+    verbose: bool = True,
+) -> list[LoRADelta]:
+    """Attach LoRA to the AV's first N language layers (and ONLY the language model).
+
+    AV is a Gemma4ForConditionalGeneration whose language layers use plain
+    `nn.Linear` (not `Gemma4ClippableLinear`); the vision/audio towers are not
+    on the activation-decoding path for our stroke generation, so we skip them.
+
+    The injection at <ACT_TOKEN> hits the embedding layer, then the first N
+    language layers process it — those layers are exactly where the model
+    needs trainable capacity to interpret an out-of-distribution residual.
+    """
+    return _attach_lora_walk(
+        av.model,
+        rank=rank, alpha=alpha,
+        targets=targets,
+        include_vision_tower=False,
+        include_language_first_ell=True,
+        language_layer_limit=first_n_layers,
+        accept_classes=("Linear",),
+        verbose=verbose,
+    )
+
+
+def _root_of(holder):
+    """Return the module to walk for LoRA state collection.
+
+    For AR (has `.backbone`) walk that; for AV (has `.model`) walk that; for a
+    bare nn.Module walk it directly.
+    """
+    if hasattr(holder, "backbone"):
+        return holder.backbone
+    if hasattr(holder, "model"):
+        return holder.model
+    return holder
+
+
+def lora_state_dict(holder) -> dict[str, torch.Tensor]:
+    """Collect a flat state-dict of all LoRA A and B tensors.
+
+    Works on AR (`.backbone`), AV (`.model`), or any bare nn.Module. Keys are
+    `<qualified_module_name>.A` and `<qualified_module_name>.B`.
+    """
+    root = _root_of(holder)
     state = {}
-    for name, module in ar.backbone.named_modules():
+    for name, module in root.named_modules():
         if not hasattr(module, "_lora"):
             continue
-        state[f"{name}.A"] = module._lora.A.detach().clone()
-        state[f"{name}.B"] = module._lora.B.detach().clone()
+        state[f"{name}.A"] = module._lora.A.detach().cpu().clone()
+        state[f"{name}.B"] = module._lora.B.detach().cpu().clone()
     return state
 
 
-def load_lora_state(ar, state: dict[str, torch.Tensor], strict: bool = True) -> None:
-    """Restore LoRA A/B weights into a previously-attached AR.
+def load_lora_state(holder, state: dict[str, torch.Tensor], strict: bool = True) -> None:
+    """Restore LoRA A/B weights into a previously-attached AR or AV.
 
-    `attach_lora_to_ar` must have been called first to create the LoRA modules.
+    The `attach_lora_to_*` function must have been called first to create the
+    LoRA modules.
     """
+    root = _root_of(holder)
     loaded = 0
     expected = 0
-    for name, module in ar.backbone.named_modules():
+    for name, module in root.named_modules():
         if not hasattr(module, "_lora"):
             continue
         expected += 1
@@ -245,6 +324,15 @@ def load_lora_state(ar, state: dict[str, torch.Tensor], strict: bool = True) -> 
         loaded += 1
     if strict and loaded != expected:
         raise RuntimeError(f"loaded {loaded} LoRA modules, expected {expected}")
+
+
+def lora_param_iter(holder):
+    """Yield trainable LoRA params for an optimiser, regardless of holder type."""
+    root = _root_of(holder)
+    for _, module in root.named_modules():
+        if hasattr(module, "_lora"):
+            for p in module._lora.parameters():
+                yield p
 
 
 def freeze_all_but_lora_and_linear(ar) -> tuple[list[nn.Parameter], list[nn.Parameter]]:
