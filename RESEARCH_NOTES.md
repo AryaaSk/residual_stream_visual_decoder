@@ -320,3 +320,56 @@ v2.0 added ~2 GPU-hours (Phase 0 sanity + Phase 1 port + Phase 2 SFT × 2 layers
 - Broader prompt set — push the model on prompts where there ARE no QuickDraw drawings (`"the Eiffel Tower"`, `"thunderstorm"`, `"loneliness"`, `"the capital of France"`).
 - Cross-layer trajectory video using L10 and L29 (early-features vs late-semantic).
 - Architectural variant: Chameleon-7B as base, with native image-token generation (skipping the stroke tokenization entirely). The cleanest version of the project's vision — same model generates images natively, AV doesn't need a separate vocab at all.
+
+---
+
+## v2.1 — Contrastive Stage 2 REINFORCE (the reward fix)
+
+v2.0's Stage 2 Qwen-self-consistency reward saturated immediately: reward EMA only moved from 1.073 to 1.083 over 90 steps. Diagnosis: the v2.0 Stage 1.5 SFT outputs already produce activations very similar to the text-prompt activation at L10 — so `cosine(h_text, h_image_then_text)` is already at ceiling. No gradient signal to work with.
+
+The deeper diagnosis: a *generic plausible drawing* of anything probably gets high consistency because Qwen's residual stream is robust. The reward wasn't testing what we cared about ("does the drawing look like THIS concept specifically?") — it was testing "does the drawing produce SOME activation at L?" which any non-blank drawing does.
+
+### The fix: contrastive margin
+
+v2.1's reward function (`code/train/stage2_qwen_contrast.py`):
+
+```
+for each step:
+  P_pos = sample prompt
+  P_neg = sample DIFFERENT-concept prompt (keyword-disjoint)
+  h_text_pos = Qwen(P_pos)[L][last]
+  h_text_neg = Qwen(P_neg)[L][last]
+  D = AV.sample(h_text_pos, n=G)
+  for d in D:
+    image = render(d)
+    h_img_pos = Qwen(image + P_pos)[L][last]
+    h_img_neg = Qwen(image + P_neg)[L][last]
+    sim_pos = cosine(h_text_pos, h_img_pos)
+    sim_neg = cosine(h_text_neg, h_img_neg)
+    margin = sim_pos - sim_neg                  # how much MORE does it fit the right prompt?
+    reward[d] = margin + 0.1*CLIP_sim - stroke_penalty
+  REINFORCE on AV with group-normalised advantage
+  + KL anchor to v2.0 init
+```
+
+The reward is now near-zero for a generic plausible drawing (it fits the right and wrong prompts about equally — `sim_pos ≈ sim_neg`) and only goes positive for **drawings that are specifically of the correct concept** (`sim_pos > sim_neg`).
+
+### First-step observation: margin starts at zero
+
+Day-one finding: at step 0 of v2.1, `margin_ema ≈ 0.000`. The v2.0 Stage 1.5 SFT outputs ARE generic — when CLIP-ranked best-of-32 picks the most-cat-looking drawing, that drawing still produces activations that match "dog" prompt about as well as it matches "cat" prompt. *This is empirical confirmation of the user's interpretability critique from the v2.0 conversation.*
+
+The user's pushback in plain English: "We aren't decoding the model's thought — we're producing drawings that look vaguely like the prompt's concept but don't specifically encode it." The margin-near-zero result is the measurement of exactly that gap.
+
+REINFORCE on the contrastive reward pushes the margin upward. If the AV can produce drawings where margin >> 0 — drawings that the SAME frozen Qwen recognises as specifically the right concept — that's the actual interpretability claim the project always wanted to make.
+
+### What v2.1 ships
+
+(filled in after Phase 4 of v2.1 completes — currently training)
+
+Training the contrastive reward on Qwen 3.5-4B from the v2.0 L10 SFT init. 400 steps × ~7 sec each on H200. Probes at 50/150/300/final, save every 150 steps. CLIP autoeval after.
+
+If margin moves clearly upward AND visuals stay coherent: tag v2.1 with the contrastive-trained AV.
+
+If margin moves but visuals degrade (REINFORCE overfits to the reward signal): tune KL anchor up, restart.
+
+If margin doesn't move at all: the reward is still too easy, or the AV doesn't have enough capacity to be more specific. Either way: a real interpretability data point — "even with contrast-based reward, the v2.0 SFT distribution is the ceiling for AV specificity on this base."
