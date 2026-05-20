@@ -29,6 +29,10 @@ while [[ $(date +%s) -lt "$DEADLINE" ]]; do
             "$H200_USER@$H200_HOST:$REMOTE_DIR/artefacts/v1_1/" artefacts/v1_1/ 2>&1 | tail -3 | tee -a "$LOG"
         rsync -avz -e "ssh -i $H200_KEY -o StrictHostKeyChecking=no" \
             "$H200_USER@$H200_HOST:$REMOTE_DIR/runs/autofinish.log" runs/ 2>&1 | tail -3 | tee -a "$LOG"
+        log "auto-filling WRITEUP from SUMMARY.json"
+        /usr/bin/env python3 code/eval/fill_writeup.py \
+            --summary findings/v1_1/SUMMARY.json \
+            --writeup WRITEUP.md 2>&1 | tee -a "$LOG"
         log "done."
         exit 0
     fi
