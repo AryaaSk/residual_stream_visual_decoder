@@ -1,0 +1,102 @@
+[
+  {
+    "slug": "airplane",
+    "score": 33.98786544799805,
+    "from": "clip_L24_step005000"
+  },
+  {
+    "slug": "apple",
+    "score": 31.88661003112793,
+    "from": "clip_L24_step010000"
+  },
+  {
+    "slug": "bird",
+    "score": 29.318157196044922,
+    "from": "clip_L12"
+  },
+  {
+    "slug": "cactus",
+    "score": 28.571653366088867,
+    "from": "clip_L24_step005000"
+  },
+  {
+    "slug": "car",
+    "score": 31.073232650756836,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "cat",
+    "score": 32.131900787353516,
+    "from": "clip_L24_step010000"
+  },
+  {
+    "slug": "clock",
+    "score": 29.236284255981445,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "cloud",
+    "score": 30.88002586364746,
+    "from": "clip_L12"
+  },
+  {
+    "slug": "dog",
+    "score": 31.263334274291992,
+    "from": "clip_L12"
+  },
+  {
+    "slug": "elephant",
+    "score": 31.281959533691406,
+    "from": "clip_L24_step010000"
+  },
+  {
+    "slug": "fish",
+    "score": 30.50682258605957,
+    "from": "clip_L12_step010000"
+  },
+  {
+    "slug": "flower",
+    "score": 31.96306800842285,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "horse",
+    "score": 32.91837692260742,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "house",
+    "score": 29.856609344482422,
+    "from": "clip_L24_step005000"
+  },
+  {
+    "slug": "mountain",
+    "score": 32.02956771850586,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "pizza",
+    "score": 29.465099334716797,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "star",
+    "score": 29.151687622070312,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "sun",
+    "score": 29.444194793701172,
+    "from": "clip_L24_step005000"
+  },
+  {
+    "slug": "tree",
+    "score": 31.719985961914062,
+    "from": "clip_L12"
+  },
+  {
+    "slug": "umbrella",
+    "score": 33.05643081665039,
+    "from": "clip_L12_step005000"
+  }
+]
