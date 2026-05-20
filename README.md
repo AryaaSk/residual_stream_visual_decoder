@@ -35,6 +35,16 @@ abstract structure.
 Bottom row (v2.0): cat has whiskers. Elephant has a trunk. Horse has a mane.
 Sun has rays. Pizza has toppings.
 
+### A small interpretability surprise: the dog drawing contains the word "dog"
+
+In the v2.0 best-of-best for the prompt "I am thinking about a dog", the AV
+produced both a dog silhouette AND the literal letters **d-o-g** drawn in
+stroke-tokenised letterform off to the side. The L10 activation for the prompt
+appears to encode both the *concept* of dog and the *spelling of the token*,
+and the AV decoded both into stroke output. A serendipitous (and replicable)
+demonstration that an LLM's mid-stack representation isn't just one thing.
+See `artefacts/v2_0/best_of_best/dog.png`.
+
 Full iteration history (v0 → v2.0, every dead end + breakthrough) in
 [`RESEARCH_NOTES.md`](RESEARCH_NOTES.md). The v2.0 plan and architectural
 rationale are in [`V2_PLAN.md`](V2_PLAN.md).
