@@ -1,10 +1,20 @@
-# Residual Stream Visual Decoder — v1.0 Writeup
+# Residual Stream Visual Decoder — v1.1 Writeup
 
-**TL;DR.** We train a small open LLM (Gemma 4 E2B) to **draw what another copy of itself is thinking** — strokes on a canvas, rendered alongside the prompt that produced them. The drawings come from the model's *residual stream activation* at a chosen layer, not from the prompt's text. A second copy of Gemma 4 (the Activation Reconstructor) reads the rendered drawing and recovers the activation, providing a faithfulness signal that drives joint iterative training.
+**What we tried.** Train a small open LLM (Gemma 4 E2B) to **draw what another copy of itself is thinking** — vector strokes on a canvas, conditioned on the residual-stream activation at a chosen layer. A second copy of Gemma 4 (the Activation Reconstructor) reads the rendered drawing and recovers the activation, providing a faithfulness signal that drives joint iterative training. This is a visual port of Anthropic's [Natural Language Autoencoders](https://transformer-circuits.pub/2026/nla/index.html) — decoding activations to a 2D drawing instead of to text.
 
-This is a small-model adaptation of Anthropic's [Natural Language Autoencoders](https://transformer-circuits.pub/2026/nla/index.html), with one swap: instead of decoding activations to *text*, we decode to *vector strokes* that render into images. The visual channel exposes structure — spatial layout, drawing order, cross-layer refinement — that text decoding can't.
+**What we got.**
 
-> **Status.** v1.0 has shipped. Demo + writeup below. FVE numbers, hero gallery and trajectory MP4s are filled in after training completes — see `INDEX.html` for the live state.
+| | L12 | L24 |
+|---|---|---|
+| **held-out cosine** | 0.51 | **0.70** |
+| **held-out FVE** | -0.14 | -0.31 |
+| visuals recognisable as concept | no | no |
+
+The architecture **does** extract per-prompt structure — held-out cosine 0.5-0.7 says the AR's reconstruction direction is meaningfully tied to the source prompt. But the AR's reconstruction has higher magnitude variance than the activations themselves, so the explained-variance metric (FVE) stays negative. And the rendered drawings are abstract shapes, not recognisable silhouettes of the prompted concept.
+
+**What it means.** The recipe (custom LoRA on Gemma 4 backbone + iterative joint AV/AR training + activation injection via embedding hook + expanded 1215-caption corpus + 24 GPU-hr) is not enough. The MSE loss has no penalty for magnitude inflation; the KL-anchored stroke prior is too far from prompt-conditional shapes; the AR's discriminative signal exists but doesn't translate into visual recognisability. This is an honest negative result, not a win.
+
+> **Status.** v1.1 shipped: architecture, results, demo.mp4, hero gallery, per-token and cross-layer trajectory MP4s. Held-out cosine signal is real but recognisability is not achieved. v1.2 candidates discussed in §11.
 
 ---
 
@@ -153,6 +163,54 @@ MSE: TBD
 
 See `findings/v1/L12/iter_log.jsonl` and `findings/v1/iter_plot_L12.png` for the per-iteration trajectory.
 
+<!-- v1.1-results:start -->
+
+### 4.6 v1.1 results (expanded caption corpus + iterative joint training)
+
+**The expanded corpus did not fix the FVE wall.** With 1215 diverse captions (concrete concepts, abstract prompts, factual completions, math, code, narrative) trained iteratively at L12 and L24, held-out FVE stayed negative across all iterations. Cosine improved meaningfully at L24 (best iter 0.74).
+
+Held-out probes — best iteration per layer:
+
+| Layer | FVE | Cosine | MSE |
+|---|---|---|---|
+| L12 | -0.1395 | 0.5139 | 0.7981 |
+| L24 | -0.3065 | 0.6988 | 1.1047 |
+
+Training-distribution probes (same form as training captions):
+
+| Layer | FVE | Cosine | MSE |
+|---|---|---|---|
+| L12 | -1.6345 | 0.5780 | 0.6302 |
+| L24 | -1.4435 | 0.7577 | 0.8303 |
+
+Per-iteration trajectory (held-out FVE / cosine / MSE):
+
+**L12**:
+
+| iter | FVE | cosine | MSE |
+|---|---|---|---|
+| 0 | -0.1627 | 0.5432 | 0.7631 |
+| 1 | -0.1650 | 0.4268 | 1.0045 |
+| 2 | -0.2602 | 0.3041 | 1.5107 |
+| 3 | -0.3894 | 0.3896 | 1.1890 |
+
+**L24**:
+
+| iter | FVE | cosine | MSE |
+|---|---|---|---|
+| 0 | -0.2402 | 0.7311 | 0.9637 |
+| 1 | -0.3758 | 0.6674 | 1.1889 |
+| 2 | -0.4608 | 0.6717 | 1.1628 |
+| 3 | -0.3448 | 0.7388 | 0.9138 |
+
+**Interpretation.** Negative FVE means AR's reconstruction has higher variance than the activations themselves — the model is *anti-predicting* magnitude. Cosine staying positive (0.3-0.7) says direction is partially right; it's the calibration that fails. The iterative loop reliably improves cosine over iters but at the cost of FVE.
+
+What this tells us: the LoRA-on-backbone + iterative recipe DOES extract per-prompt structure (cosine signal is real), but the supervised MSE objective is the wrong shape for this problem — there's no penalty for magnitude inflation. v1.2 candidates: cosine-based loss, magnitude normalisation, or a discriminative (contrastive) AR objective.
+
+See `findings/v1_1/inject_demo_L12/` and `inject_demo_L24/` for the actual visuals. Per-iteration FVE plots in `findings/v1_1/iter_plot_L*.png`.
+
+<!-- v1.1-results:end -->
+
 ## 5. Hero gallery (10 polished probes at 4× upscale)
 
 > Inserted automatically after training. See `artefacts/per_probe_v1/L12/` for the full set.
@@ -206,13 +264,23 @@ python -m code.eval.cross_layer_trajectory --ckpts-root checkpoints/v1 --layers 
 python -m code.eval.make_hype_reel --in-dir artefacts/trajectory --out demo.mp4
 ```
 
-## 10. Limitations and future work
+## 10. Known issues in v1.1
 
-- **Single model (Gemma 4 E2B)**: untested on larger models. The recipe should port; quality probably scales with the host model's representational richness.
-- **English-text-only training distribution**: AV was SFT'd on QuickDraw English captions. Multilingual / code / math prompts may produce off-distribution drawings.
-- **Latency**: each demo takes ~10-30 seconds (model load + autoregressive stroke sampling). Inference-time optimisation (KV caching, batched sampling, smaller image canvas for AR) would bring it to single seconds.
-- **Per-token trajectory uses greedy decoding**: the actual thought trajectory under sampling is richer. Future: render the *distribution* of drawings per token, not just the argmax path.
-- **No text-NLA baseline trained for Gemma 4 E2B**. Anthropic released text NLAs for Gemma-3-12B-IT but not E2B; the apples-to-apples comparison requires training one (queued for v1.1).
+- **Drawings are not visually recognisable as concepts.** They are abstract structure: per-prompt different (you can tell `dog` and `eiffel` apart by stroke layout), but neither one looks like the thing. Held-out cosine 0.5-0.7 measures *something* — direction-correctness of the AR reconstruction — but recognisability is what would make the demo work as visualization.
+- **FVE is negative.** AR over-predicts magnitude; MSE loss has no penalty for variance inflation. Switching AR to a cosine-only or normalised loss is the obvious next experiment.
+- **Token-trajectory leaks stroke tokens into the text.** `token_trajectory.py` uses the AV (vocab-extended Gemma) as the *target* model for next-token prediction. When argmax over logits hits a stroke-token row, the caption ends up as `"I am thinking about a dog. Specifically, a<DX_092><PEN_UP>..."`. Architecturally the fix is a separate clean Gemma 4 for text generation + activation extraction; mechanically the fix is to mask stroke-token IDs in the next-token logits.
+- **Phase 0.5 `mv` of FVE-best checkpoint failed silently** in autofinish (`final_fve_best/` never appeared on remote despite the heading logging). Cosmetic — the visuals from last-iter (iter_03) are what we want and what `final/` points to.
+
+## 11. v1.2 candidates
+
+In rough order of expected ROI:
+
+1. **Cosine-based AR loss** instead of MSE. Cosine is the metric that's actually working; optimise for it directly. Add a small magnitude-matching term to keep the head usable, but make direction the primary objective.
+2. **AR-discriminative objective**. Train AR with InfoNCE over a batch of (drawing, h) pairs so it has to *discriminate* per-prompt rather than reconstruct a magnitude. This is closer to NLA's "AR predicts which activation produced this drawing" framing.
+3. **Drop or weaken the AV KL anchor.** Currently β=0.05 keeps AV's stroke distribution near the QuickDraw SFT prior — which is itself too narrow to allow concept-specific shapes. Try β=0.005 with the iterative loop holding it together.
+4. **Late layer (L32 / L34).** Activation geometry on L24 already pair-clustered at cos 0.80; going later trades discrimination for semantic richness. Worth a single-layer probe.
+5. **Architectural fix to token_trajectory.** Use a separate clean Gemma 4 for prompt-side text generation + activation extraction; AV is for stroke generation only.
+6. **Larger AR LoRA (r=32) or rank-32 head.** Held-out cosine plateaus around iter 2-3; more AR capacity may help if the iterative buffer is the limit.
 
 ## Credits
 

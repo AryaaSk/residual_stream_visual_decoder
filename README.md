@@ -1,12 +1,18 @@
 # Residual Stream Visual Decoder
 
-**Train a model to draw what Gemma 4 is thinking.**
+**An attempt to draw what Gemma 4 is thinking.**
 
 Each panel below is a real drawing produced by sampling stroke tokens from an
 *Activation Verbalizer* that received Gemma 4 E2B's residual-stream activation
 at layer ℓ, injected via embedding-layer surgery. The drawings are not
 generated from the prompt's text — they come from the *internal vector* the
 model is processing.
+
+> **v1.1 honest result.** Architecture works end-to-end. Held-out cosine 0.5-0.7
+> means the AR's reconstruction is meaningfully tied to the source prompt. But
+> the drawings come out as **abstract structure, not recognisable silhouettes**,
+> and FVE stays negative. See `WRITEUP.md` §4.6 for the full numbers and §11 for
+> v1.2 candidates. Shipping as a transparent record of what 24 GPU-hours buys.
 
 <!-- The hype reel + per-token + cross-layer galleries are inserted by build_index.py after training. -->
 

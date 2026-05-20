@@ -1,0 +1,15 @@
+{
+  "model_id": "google/gemma-4-e2b-it",
+  "layer": 12,
+  "alpha": 0.5,
+  "av_ckpt": "checkpoints/v1_1/L12/final",
+  "ar_ckpt": "checkpoints/v1_1/L12/final",
+  "n_probes": 20,
+  "n_samples_per_probe": 2,
+  "summary": {
+    "fve": -0.13954949378967285,
+    "cosine": 0.5138512849807739,
+    "mse": 0.7981259226799011,
+    "round_trip_loss_2_1_minus_cos": 0.9722974300384521
+  }
+}
