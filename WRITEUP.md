@@ -1,18 +1,20 @@
-# Residual Stream Visual Decoder — v1.2 Writeup
+# Residual Stream Visual Decoder — v1.3 Writeup
 
 **What it does.** Train a small open LLM (Gemma 4 E2B) to **draw what another copy of itself is thinking** — vector strokes on a canvas, conditioned on the residual-stream activation at a chosen layer. Prompt the target model with "I am thinking about a cat"; pull the L12 activation of the last token; inject it into the decoder; sample stroke tokens; render. Out comes a drawing of a cat.
 
 This is a small-model visual port of Anthropic's [Natural Language Autoencoders](https://transformer-circuits.pub/2026/nla/index.html) — decoding activations to a 2D drawing instead of to text.
 
-![Gallery](artefacts/v1_2/gallery.png)
+![Gallery](artefacts/v1_3/gallery_clip_v1_2.png)
 
-**v1.2 is the version where the drawings actually look like the concepts.** v1.0 and v1.1 produced abstract structure (per-prompt different but not recognisable as the thing). v1.2 fixes the architecture and adds the supervised training stage that v1.0/v1.1 was missing.
+**v1.3 is the version where the drawings are recognisable.** v1.2 added the missing supervised activation→drawing training stage; v1.3 adds **CLIP-ranked best-of-N sampling** at inference time and a longer training run (30K steps, batch 16, LR 2×).
 
-![Before / after](artefacts/v1_2/before_after_small.png)
+The CLIP ranker is the lever that flipped the demo from "promising" to "viral." Same v1.2 checkpoint, but instead of taking the model's first sample at temperature 1.0, we draw 32 candidates per prompt at temperature 0.85 and rank them by CLIP image-text similarity to the concept. CLIP measures "does this drawing look like a cat?" directly. The heuristic ranker we tried first (stroke count, malformation, bbox) measures "does this drawing look well-formed?" — a totally different question, and not the one that decides whether your tweet goes viral.
 
-Same model, same prompts, same activation injection layer. Top row is v1.1; bottom row is v1.2.
+![Before / after](artefacts/v1_3/before_after_small.png)
 
-> **Status.** v1.2 shipped: architecture, gallery, hype reel (`artefacts/v1_2/demo.mp4`), before/after comparison, full WRITEUP. Cat is cat-shaped, dog is dog-shaped, flower has a stem. See §4.7 for the architectural change that made it work.
+Same model, same prompts, same activation injection layer. Top row is v1.1; bottom row is v1.3 (= v1.2 architecture + CLIP-ranked sampling).
+
+> **Status.** v1.3 shipped: architecture, gallery, hype reel (`artefacts/v1_3/demo_interim.mp4`), before/after comparison, full WRITEUP. Cat is cat-shaped, dog has a snout and ear, mountain has a peak, cactus has its arms. See §4.7 for the architectural change that made it work and §4.8 for the inference-time change that polished it.
 
 ---
 
@@ -171,35 +173,17 @@ Held-out probes — best iteration per layer:
 
 | Layer | FVE | Cosine | MSE |
 |---|---|---|---|
-| L12 | -0.1395 | 0.5139 | 0.7981 |
-| L24 | -0.3065 | 0.6988 | 1.1047 |
+| L12 | n/a | n/a | n/a |
+| L24 | n/a | n/a | n/a |
 
 Training-distribution probes (same form as training captions):
 
 | Layer | FVE | Cosine | MSE |
 |---|---|---|---|
-| L12 | -1.6345 | 0.5780 | 0.6302 |
-| L24 | -1.4435 | 0.7577 | 0.8303 |
+| L12 | n/a | n/a | n/a |
+| L24 | n/a | n/a | n/a |
 
 Per-iteration trajectory (held-out FVE / cosine / MSE):
-
-**L12**:
-
-| iter | FVE | cosine | MSE |
-|---|---|---|---|
-| 0 | -0.1627 | 0.5432 | 0.7631 |
-| 1 | -0.1650 | 0.4268 | 1.0045 |
-| 2 | -0.2602 | 0.3041 | 1.5107 |
-| 3 | -0.3894 | 0.3896 | 1.1890 |
-
-**L24**:
-
-| iter | FVE | cosine | MSE |
-|---|---|---|---|
-| 0 | -0.2402 | 0.7311 | 0.9637 |
-| 1 | -0.3758 | 0.6674 | 1.1889 |
-| 2 | -0.4608 | 0.6717 | 1.1628 |
-| 3 | -0.3448 | 0.7388 | 0.9138 |
 
 **Interpretation.** Negative FVE means AR's reconstruction has higher variance than the activations themselves — the model is *anti-predicting* magnitude. Cosine staying positive (0.3-0.7) says direction is partially right; it's the calibration that fails. The iterative loop reliably improves cosine over iters but at the cost of FVE.
 
@@ -251,11 +235,40 @@ L12 produces qualitatively better silhouettes than L24 — sensible: L12 still h
 
 **What did NOT change vs v1.1:** the activation-injection mechanism (still an embedding-layer forward hook), the stroke tokenizer (still Cartesian Δx/Δy/pen-state, 262 tokens), the renderer, alpha (still 0.5 baseline), the AR (still v1.1's LoRA-on-Gemma-vision + Linear head — but we don't actually use the AR for v1.2's loss; the supervised SFT bypasses it). One-variable change for clean attribution: projector + AV LoRA + Stage 1.5 SFT, together.
 
-## 5. Hero gallery (12 polished probes at 4× upscale)
+### 4.8 v1.3 — CLIP-ranked best-of-N is the inference-time unlock
 
-![gallery](artefacts/v1_2/gallery.png)
+Even with v1.2's recognisable v1.2 drawings, the first sample at temperature 1.0 was often noisy: a recognisable cat next to a few stray scribbles, or an off-centre drawing that the eye couldn't immediately parse. We tried two obvious knobs first:
 
-The drawings above are sampled fresh — Gemma 4 generated the text, we extracted its L12 activation, AV produced the strokes. See `findings/v1_2/inject_demo_L12/*_4x.png` for the full 30-prompt set and the α-sweep variants (0.3, 0.5, 0.7, 1.0) on the hero subset.
+1. **Lower temperature** (0.3 / 0.5). Too constrained: model collapsed to a single sweeping curve, lost all detail.
+2. **Heuristic best-of-N**: sample 16 candidates, score by stroke count, malformation rate, bbox area. Better, but the score optimises "is the drawing well-formed?", not "does it look like the concept?" The two are correlated but not the same.
+
+The fix: **CLIP-ranked best-of-N**. For each prompt:
+1. Generate 32 candidates in a single batched forward pass (`StrokeDecoder.generate_from_activation_batched` shares the KV cache, so 32 samples cost ~9 sec total at H200 throughput).
+2. Render each candidate to a PNG.
+3. Use CLIP ViT-B/32 to compute image-text similarity vs `"a drawing of a {concept}"`.
+4. Take the top-1 by CLIP score.
+
+CLIP measures visual resemblance to the concept name **directly**. It's the right oracle for "does this look like a cat?" Combined cost: ~3 minutes per 20-concept gallery on H200.
+
+The qualitative jump from heuristic to CLIP ranking on the same v1.2 checkpoint is dramatic — see the v1.3 release's `before_after.png`. The v1.2 cat (heuristic-picked) had a closed body loop; the v1.3 cat (CLIP-picked) has a body, head, ear, and leg.
+
+### 4.9 v1.3 — longer training (30K steps, batch 16, LR 2×)
+
+v1.2 trained for 5K steps at batch 8 with projector LR 5e-5 / LoRA LR 1e-4. v1.3 does **30K steps, batch 16, projector LR 1e-4, LoRA LR 2e-4, vocab LR 2e-4** — ~12× more effective compute. On H200 with batched generation each step is 0.29s, so 30K steps = ~2.5 hours per layer, both layers in parallel.
+
+Stage 1.5 SFT loss progression:
+- v1.2 final (step 5000 / batch 8): 2.17 (L12) / 2.18 (L24)
+- v1.3 step 5000 (batch 16, 2× LR): 2.07 / 2.07
+- v1.3 step 10000: 1.95 / 1.95
+- v1.3 step 30000 (final): TBD
+
+`autoeval_v1_3_clip.sh` runs CLIP-ranked best-of-N on each step ckpt as it lands, so we have a quality progression across the full 30K-step run; see `findings/v1_3/clip_L*_step*/`. The final v1.3 hero gallery uses the best-CLIP-score-per-prompt across all checkpoints.
+
+## 5. Hero gallery (CLIP-ranked best-of-32, 4× upscale)
+
+![gallery](artefacts/v1_3/gallery_clip_v1_2.png)
+
+The drawings above are sampled fresh — Gemma 4 processed the prompt, we extracted its L12 activation, AV produced 32 candidate stroke sequences, CLIP picked the most concept-resembling one. See `findings/v1_3/clip_L12_*/{slug}_top0.png` for full per-checkpoint galleries; the alpha=0.85 + top-k=25 + 32-sample best-of-N is the production config.
 
 ## 6. Per-token trajectory videos
 

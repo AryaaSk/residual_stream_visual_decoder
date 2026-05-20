@@ -64,8 +64,14 @@ def main():
     p.add_argument("--row-label-h", type=int, default=40)
     args = p.parse_args()
 
-    available = [(s, p) for s, p in HERO_PAIRS
-                 if (args.v1_2_dir / f"{s}_4x.png").exists()]
+    # Try both _4x.png (old format) and .png (CLIP-ranker output format)
+    def exists_in(d: Path, slug: str) -> Path | None:
+        for variant in (f"{slug}_4x.png", f"{slug}.png", f"{slug}_top0.png"):
+            p = d / variant
+            if p.exists():
+                return p
+        return None
+    available = [(s, p) for s, p in HERO_PAIRS if exists_in(args.v1_2_dir, s) is not None]
     if not available:
         print(f"[grid] no matching pairs found; need files in {args.v1_2_dir}")
         return
@@ -107,7 +113,8 @@ def main():
         draw.text((gap, y_label + 8), label, fill="black", font=row_font)
         for col_i, (slug, prompt) in enumerate(available):
             x = gap + col_i * (cell + gap)
-            img = load_or_blank(src_dir / f"{slug}_4x.png", cell)
+            found = exists_in(src_dir, slug)
+            img = load_or_blank(found if found else (src_dir / f"{slug}.png"), cell)
             canvas.paste(img, (x, y_img))
             # Caption: prompt under the image (only on bottom row)
             if row_i == 1:

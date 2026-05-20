@@ -44,6 +44,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--src", type=Path, default=Path("findings/v1_2/inject_demo_L12"))
     p.add_argument("--out", type=Path, default=Path("artefacts/v1_2/gallery.png"))
+    p.add_argument("--suffix", default="_4x", help="Filename suffix before .png (e.g. '_4x', '', '_top0')")
     p.add_argument("--cols", type=int, default=4)
     p.add_argument("--cell", type=int, default=280)
     p.add_argument("--gap", type=int, default=16)
@@ -74,7 +75,7 @@ def main():
         r, c = divmod(i, cols)
         x = gap + c * (cell + gap)
         y = title_h + gap + r * (cell + cap_h + gap)
-        img_path = args.src / f"{slug}_4x.png"
+        img_path = args.src / f"{slug}{args.suffix}.png"
         if img_path.exists():
             img = Image.open(img_path).convert("RGB")
             img.thumbnail((cell, cell))

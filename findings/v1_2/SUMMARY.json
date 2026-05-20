@@ -1,0 +1,16 @@
+{
+  "stage": "1.5 (act-conditioned SFT)",
+  "layers": {
+    "L12": {
+      "sft_loss_first": 3.1494789123535156,
+      "sft_loss_last": 2.147920846939087,
+      "n_steps_logged": 200
+    },
+    "L24": {
+      "sft_loss_first": 3.153090238571167,
+      "sft_loss_last": 2.167999744415283,
+      "n_steps_logged": 200
+    }
+  },
+  "status": "DONE"
+}

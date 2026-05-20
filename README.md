@@ -2,7 +2,7 @@
 
 **Draw what Gemma 4 is thinking.**
 
-![gallery](artefacts/v1_2/gallery.png)
+![gallery](artefacts/v1_3/gallery_clip_v1_2.png)
 
 Each panel above is a real drawing produced by sampling stroke tokens from an
 *Activation Verbalizer* that received Gemma 4 E2B's residual-stream activation
@@ -10,16 +10,17 @@ at layer 12, injected via embedding-layer surgery. The drawings are not
 generated from the prompt's text — they come from the *internal vector* the
 model is processing when you ask it to think about a cat.
 
-**v1.1 vs v1.2 — same model, same prompts, same injection layer:**
+**v1.1 vs v1.3 — same model, same prompts, same injection layer:**
 
-![Before / after](artefacts/v1_2/before_after_small.png)
+![Before / after](artefacts/v1_3/before_after_small.png)
 
 Top row (v1.1): the architecture worked end-to-end but the AV had no learnable
 surface to interpret the injected activation. Outputs were abstract structure.
 
-Bottom row (v1.2): added a learnable activation projector + LoRA on the AV's
+Bottom row (v1.3): added a learnable activation projector + LoRA on the AV's
 first 8 language layers + a supervised "activation → real drawing" Stage 1.5
-training stage. Cat-shaped cats, dog-shaped dogs, flower-shaped flowers.
+training stage, plus CLIP-ranked best-of-32 sampling at inference time.
+Cat-shaped cats, dog-shaped dogs with snouts and ears, flower-shaped flowers.
 
 <!-- The hype reel + per-token + cross-layer galleries are inserted by build_index.py after training. -->
 
