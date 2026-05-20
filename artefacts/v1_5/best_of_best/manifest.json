@@ -1,0 +1,102 @@
+[
+  {
+    "slug": "airplane",
+    "score": 35.999141693115234,
+    "from": "clip_L24_step005000"
+  },
+  {
+    "slug": "apple",
+    "score": 37.08979034423828,
+    "from": "clip_L24_step005000"
+  },
+  {
+    "slug": "bird",
+    "score": 30.193836212158203,
+    "from": "clip_L24_step005000"
+  },
+  {
+    "slug": "cactus",
+    "score": 27.700359344482422,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "car",
+    "score": 33.9334716796875,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "cat",
+    "score": 34.25434875488281,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "clock",
+    "score": 29.91979217529297,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "cloud",
+    "score": 37.79664611816406,
+    "from": "clip_L24_step005000"
+  },
+  {
+    "slug": "dog",
+    "score": 30.177234649658203,
+    "from": "clip_L24_step005000"
+  },
+  {
+    "slug": "elephant",
+    "score": 30.625322341918945,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "fish",
+    "score": 34.89665985107422,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "flower",
+    "score": 35.14274978637695,
+    "from": "clip_L24_step005000"
+  },
+  {
+    "slug": "horse",
+    "score": 32.442970275878906,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "house",
+    "score": 28.742420196533203,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "mountain",
+    "score": 37.778526306152344,
+    "from": "clip_L24_step005000"
+  },
+  {
+    "slug": "pizza",
+    "score": 31.11640167236328,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "star",
+    "score": 29.538610458374023,
+    "from": "clip_L12_step005000"
+  },
+  {
+    "slug": "sun",
+    "score": 36.235164642333984,
+    "from": "clip_L24_step005000"
+  },
+  {
+    "slug": "tree",
+    "score": 30.88810157775879,
+    "from": "clip_L24_step005000"
+  },
+  {
+    "slug": "umbrella",
+    "score": 38.2158317565918,
+    "from": "clip_L24_step005000"
+  }
+]

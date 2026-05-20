@@ -2,28 +2,30 @@
 
 **Draw what Gemma 4 is thinking.**
 
-![gallery](artefacts/v1_4/gallery.png)
+![gallery](artefacts/v1_5/gallery.png)
 
 Each panel above is a real drawing produced by sampling stroke tokens from an
 *Activation Verbalizer* that received Gemma 4 E2B's residual-stream activation
-at layer 12, injected via embedding-layer surgery. The drawings are not
+at layer 12 or 24, injected via embedding-layer surgery. The drawings are not
 generated from the prompt's text — they come from the *internal vector* the
 model is processing when you ask it to think about a cat.
 
-**v1.1 vs v1.4 — same model, same prompts, same injection layer:**
+**v1.1 vs v1.5 — same model, same prompts, same activation injection:**
 
-![Before / after](artefacts/v1_4/before_after_small.png)
+![Before / after](artefacts/v1_5/before_after_small.png)
 
 Top row (v1.1): the architecture worked end-to-end but the AV had no learnable
 surface to interpret the injected activation. Outputs were abstract structure.
 
-Bottom row (v1.4): everything from v1.3 (projector + AV-LoRA + Stage 1.5 SFT
-+ CLIP-ranked best-of-32) PLUS the breakthrough — **canonical-drawing
-distillation**. Pick the top-3 highest-CLIP-score drawings per concept (from
-QuickDraw's ~200 drawings each), train AV on ONLY those. Collapses the data
-entropy from "predict one of 200 different cat drawings" to "predict THE 3
-clearest cats" → SFT loss drops from 1.83 to 0.02 in 5K steps. Drawings come
-out as actual cat faces with pointed ears, eyes, and noses.
+Bottom row (v1.5): every architectural and training change from v1.2-v1.4
+stacked: learnable activation projector + LoRA on all 24 AV language layers +
+Stage 1.5 supervised SFT on top-5 canonical drawings per concept (CLIP-ranked)
++ CLIP-ranked best-of-32 inference + 50K-step training with cosine LR decay.
+Stage 1.5 SFT loss drops 3.28 → 0.02. Sun has rays. Cat has a face. Fish has
+a tail. Pizza is a circle.
+
+Full iteration history (v0 → v1.5, every dead end + breakthrough) in
+[`RESEARCH_NOTES.md`](RESEARCH_NOTES.md).
 
 <!-- The hype reel + per-token + cross-layer galleries are inserted by build_index.py after training. -->
 
