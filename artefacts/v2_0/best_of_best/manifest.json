@@ -2,17 +2,17 @@
   {
     "slug": "airplane",
     "score": 36.981178283691406,
-    "from": "clip_L29_step005000"
+    "from": "clip_L10_step007500"
   },
   {
     "slug": "apple",
     "score": 37.28472137451172,
-    "from": "clip_L10_step005000"
+    "from": "clip_L10_final"
   },
   {
     "slug": "bird",
     "score": 34.6762580871582,
-    "from": "clip_L10_step005000"
+    "from": "clip_L10_final"
   },
   {
     "slug": "cactus",
@@ -22,7 +22,7 @@
   {
     "slug": "car",
     "score": 36.55142593383789,
-    "from": "clip_L10_step005000"
+    "from": "clip_L10_final"
   },
   {
     "slug": "cat",
@@ -32,17 +32,17 @@
   {
     "slug": "clock",
     "score": 34.10324478149414,
-    "from": "clip_L10_step005000"
+    "from": "clip_L10_final"
   },
   {
     "slug": "cloud",
-    "score": 36.472530364990234,
-    "from": "clip_L29_step005000"
+    "score": 37.79664611816406,
+    "from": "clip_L29_step007500"
   },
   {
     "slug": "dog",
-    "score": 35.131446838378906,
-    "from": "clip_L10_step005000"
+    "score": 35.23054122924805,
+    "from": "clip_L29_step002500"
   },
   {
     "slug": "elephant",
@@ -57,37 +57,37 @@
   {
     "slug": "flower",
     "score": 35.68099594116211,
-    "from": "clip_L10_step005000"
+    "from": "clip_L10_final"
   },
   {
     "slug": "horse",
     "score": 36.6077995300293,
-    "from": "clip_L10_step005000"
+    "from": "clip_L10_final"
   },
   {
     "slug": "house",
-    "score": 35.489261627197266,
-    "from": "clip_L29_step005000"
+    "score": 35.59874725341797,
+    "from": "clip_L29_step002500"
   },
   {
     "slug": "mountain",
     "score": 37.778526306152344,
-    "from": "clip_L10_step005000"
+    "from": "clip_L10_final"
   },
   {
     "slug": "pizza",
-    "score": 34.92133712768555,
-    "from": "clip_L29_step005000"
+    "score": 35.44071960449219,
+    "from": "clip_L10_final"
   },
   {
     "slug": "star",
     "score": 35.888004302978516,
-    "from": "clip_L10_step005000"
+    "from": "clip_L10_final"
   },
   {
     "slug": "sun",
     "score": 36.235164642333984,
-    "from": "clip_L10_step002500"
+    "from": "clip_L10_final"
   },
   {
     "slug": "tree",
@@ -97,6 +97,6 @@
   {
     "slug": "umbrella",
     "score": 39.16427993774414,
-    "from": "clip_L10_step005000"
+    "from": "clip_L10_final"
   }
 ]
