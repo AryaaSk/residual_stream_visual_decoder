@@ -153,7 +153,10 @@ def main():
     p.add_argument("--warmup-steps", type=int, default=200)
     p.add_argument("--lora-rank", type=int, default=16)
     p.add_argument("--lora-alpha", type=int, default=32)
-    p.add_argument("--lora-first-n-layers", type=int, default=8)
+    p.add_argument("--lora-first-n-layers", type=int, default=8,
+                   help="Number of language layers to attach LoRA to. v1.4 uses 24 (all).")
+    p.add_argument("--cosine-decay", action="store_true",
+                   help="Cosine LR decay from peak to peak*0.1 over training")
     p.add_argument("--projector-alpha-init", type=float, default=0.5)
     p.add_argument("--max-seq-len", type=int, default=800)
     p.add_argument("--log-every", type=int, default=20)
@@ -242,11 +245,36 @@ def main():
     print(f"[s15] cached {len(h_lookup)} activations in {time.time() - t_extract:.1f}s; mean h-norm={sum(h.norm().item() for h in h_lookup.values()) / max(1, len(h_lookup)):.2f}", flush=True)
 
     # ----- Attach AV LoRA -----
-    print(f"[s15] attaching AV LoRA on first {args.lora_first_n_layers} language layers ...", flush=True)
-    av_lora_modules = attach_lora_to_av(
-        av, first_n_layers=args.lora_first_n_layers,
-        rank=args.lora_rank, alpha=args.lora_alpha, verbose=True,
-    )
+    # Count existing LoRA modules (from ckpt). If user asked for MORE layers
+    # than the ckpt has, attach additional LoRA on the new layers (the
+    # walker's seen-set + add_module replace makes this idempotent: existing
+    # modules won't get re-attached because of the seen check, BUT
+    # add_module on a name that already exists would clobber. So we
+    # explicitly skip layers that already have _lora attached.)
+    from ar.lora_gemma4 import _attach_lora_walk
+    existing_layer_idxs = set()
+    for name, module in av.model.named_modules():
+        if hasattr(module, "_lora"):
+            import re
+            m = re.search(r"\.layers\.(\d+)\.", name)
+            if m:
+                existing_layer_idxs.add(int(m.group(1)))
+    print(f"[s15] {len(existing_layer_idxs)} layers have LoRA from ckpt: {sorted(existing_layer_idxs)}", flush=True)
+    if max(existing_layer_idxs, default=-1) + 1 < args.lora_first_n_layers:
+        # Attach LoRA on new (uncovered) language layers
+        new_first_n = args.lora_first_n_layers
+        print(f"[s15] expanding AV LoRA from {len(existing_layer_idxs)} → {new_first_n} language layers ...", flush=True)
+        attach_lora_to_av(
+            av, first_n_layers=new_first_n,
+            rank=args.lora_rank, alpha=args.lora_alpha, verbose=True,
+        )
+    elif not existing_layer_idxs:
+        print(f"[s15] attaching AV LoRA on first {args.lora_first_n_layers} language layers ...", flush=True)
+        attach_lora_to_av(
+            av, first_n_layers=args.lora_first_n_layers,
+            rank=args.lora_rank, alpha=args.lora_alpha, verbose=True,
+        )
+    av_lora_modules = list(lora_param_iter(av))
 
     # ----- Set requires_grad -----
     for p_ in av.model.parameters():
@@ -341,11 +369,19 @@ def main():
             continue
 
         if (step + 1) % args.grad_accum == 0:
-            # Warmup scaling
+            # LR schedule: warmup then optional cosine decay
+            import math
             if step < args.warmup_steps:
-                scale = (step + 1) / args.warmup_steps
-                for g in optim.param_groups:
-                    g["lr"] = g.get("base_lr", g["lr"]) if "base_lr" in g else g["lr"]
+                lr_mult = (step + 1) / max(1, args.warmup_steps)
+            elif args.cosine_decay:
+                progress = (step - args.warmup_steps) / max(1, args.steps - args.warmup_steps)
+                lr_mult = 0.1 + 0.9 * 0.5 * (1.0 + math.cos(math.pi * min(progress, 1.0)))
+            else:
+                lr_mult = 1.0
+            for g in optim.param_groups:
+                if "base_lr" not in g:
+                    g["base_lr"] = g["lr"]  # capture original
+                g["lr"] = g["base_lr"] * lr_mult
             torch.nn.utils.clip_grad_norm_(
                 [p for g in param_groups for p in g["params"] if p.requires_grad],
                 max_norm=1.0,

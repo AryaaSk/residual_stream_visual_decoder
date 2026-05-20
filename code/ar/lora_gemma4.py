@@ -167,6 +167,13 @@ def _attach_lora_walk(
             continue
         seen.add(name)
 
+        # Skip modules that already have a LoRA branch attached (e.g. loaded
+        # from a previous ckpt). Re-attaching would clobber trained weights
+        # with fresh-init ones.
+        if hasattr(module, "_lora"):
+            skipped += 1
+            continue
+
         # Resolve the inner nn.Linear: Gemma4ClippableLinear wraps `self.linear`;
         # plain nn.Linear is its own inner.
         if hasattr(module, "linear") and isinstance(module.linear, nn.Linear):

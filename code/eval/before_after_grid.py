@@ -95,7 +95,7 @@ def main():
     row_font = get_font(22)
 
     # Header
-    title = "Drawing what Gemma 4 is thinking — v1.1 vs v1.2"
+    title = "Drawing what Gemma 4 is thinking — v1.1 vs v1.4"
     sub = "Same prompts, same model, same activation injection layer."
     tw = draw.textlength(title, font=title_font)
     draw.text(((width - tw) / 2, 12), title, fill="black", font=title_font)
@@ -105,7 +105,7 @@ def main():
     # Rows
     for row_i, (label, src_dir) in enumerate([
         ("v1.1 (no projector, no AV-LoRA)", args.v1_1_dir),
-        ("v1.2 (Stage 1.5 SFT)", args.v1_2_dir),
+        ("v1.4 (canonical SFT + CLIP-32)", args.v1_2_dir),
     ]):
         y_label = header_h + gap + row_i * (cell + row_label_h + gap)
         y_img = y_label + row_label_h

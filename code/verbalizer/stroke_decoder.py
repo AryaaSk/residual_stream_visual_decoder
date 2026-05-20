@@ -114,14 +114,25 @@ class StrokeDecoder:
         if "lora_state" in ckpt:
             from ar.lora_gemma4 import attach_lora_to_av, load_lora_state
             lora_meta = ckpt.get("lora_meta", {"first_n_layers": 8, "rank": 16, "alpha": 32})
+            # Infer ACTUAL number of LoRA layers from the saved state dict:
+            # if state dict only covers layers 0-7, attach only on those layers
+            # even if lora_meta claims more (this handles the
+            # skip-attach-on-resume case where meta and actual diverge).
+            import re
+            layer_idxs = set()
+            for k in ckpt["lora_state"].keys():
+                m = re.search(r"\.layers\.(\d+)\.", k)
+                if m:
+                    layer_idxs.add(int(m.group(1)))
+            actual_layers = max(layer_idxs) + 1 if layer_idxs else int(lora_meta.get("first_n_layers", 8))
             attach_lora_to_av(
                 instance,
-                first_n_layers=int(lora_meta.get("first_n_layers", 8)),
+                first_n_layers=actual_layers,
                 rank=int(lora_meta.get("rank", 16)),
                 alpha=int(lora_meta.get("alpha", 32)),
                 verbose=False,
             )
-            load_lora_state(instance, ckpt["lora_state"])
+            load_lora_state(instance, ckpt["lora_state"], strict=False)
         return instance
 
     def device(self):
