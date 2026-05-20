@@ -70,7 +70,7 @@ def main():
     parser.add_argument("--label-sft", default="SFT only")
     parser.add_argument("--label-v1", default="Stage 3 v1 (AR v1)")
     parser.add_argument("--label-v2", default="Stage 3 v2 (AR v2)")
-    parser.add_argument("--model-id", default="google/gemma-4-e2b-it")
+    parser.add_argument("--model-id", default="Qwen/Qwen3.5-4B")
     parser.add_argument("--layer", type=int, default=16)
     parser.add_argument("--alpha", type=float, default=0.5)
     parser.add_argument("--max-tokens", type=int, default=300)

@@ -59,7 +59,7 @@ def main():
     p.add_argument("--av-ckpt", type=Path, required=True)
     p.add_argument("--ar-ckpt", type=Path, required=True)
     p.add_argument("--layer", type=int, required=True)
-    p.add_argument("--model-id", default="google/gemma-4-e2b-it")
+    p.add_argument("--model-id", default="Qwen/Qwen3.5-4B")
     p.add_argument("--alpha", type=float, default=0.5)
     p.add_argument("--max-tokens", type=int, default=150)
     p.add_argument("--n-samples-per-probe", type=int, default=2)

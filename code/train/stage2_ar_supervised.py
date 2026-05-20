@@ -38,7 +38,7 @@ from render import render as stroke_render  # noqa: E402
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-id", default="google/gemma-4-e2b-it")
+    parser.add_argument("--model-id", default="Qwen/Qwen3.5-4B")
     parser.add_argument("--layer", type=int, required=True)
     parser.add_argument("--av-ckpt", type=Path, required=True,
                         help="Path to Stage-1 AV checkpoint dir (with adapter_config.json + stroke_vocab.pt)")

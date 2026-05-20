@@ -51,7 +51,7 @@ def info_nce_loss(h_hat: torch.Tensor, h_target: torch.Tensor, temperature: floa
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-id", default="google/gemma-4-e2b-it")
+    parser.add_argument("--model-id", default="Qwen/Qwen3.5-4B")
     parser.add_argument("--layer", type=int, required=True)
     parser.add_argument("--sft-corpus", type=Path, default=Path("data/sft_quickdraw.jsonl"))
     parser.add_argument("--out-dir", type=Path, default=Path("checkpoints/ar_v4"))

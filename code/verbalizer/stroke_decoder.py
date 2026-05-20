@@ -58,7 +58,7 @@ class StrokeDecoder:
     @classmethod
     def from_pretrained_and_extend(
         cls,
-        model_id: str = "google/gemma-4-e2b-it",
+        model_id: str = "Qwen/Qwen3.5-4B",
         device: str = "cuda",
         dtype: torch.dtype = torch.bfloat16,
         use_projector: bool = False,
@@ -79,7 +79,7 @@ class StrokeDecoder:
     def from_ckpt(
         cls,
         av_ckpt_dir,
-        model_id: str = "google/gemma-4-e2b-it",
+        model_id: str = "Qwen/Qwen3.5-4B",
         device: str = "cuda",
         dtype: torch.dtype = torch.bfloat16,
     ) -> "StrokeDecoder":

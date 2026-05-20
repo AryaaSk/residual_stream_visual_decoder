@@ -103,10 +103,22 @@ def _layer_index_from_name(name: str) -> int | None:
 
 
 def _module_kind_from_name(name: str) -> str:
-    """Return one of 'vision' or 'language' or 'other' based on the module path."""
+    """Return one of 'vision' or 'language' or 'other' based on the module path.
+
+    Convention:
+      - Gemma 4: language layers nested under `language_model.layers.{i}.`
+      - Qwen 3.5: language layers at `model.layers.{i}.` (no `language_model`
+        namespace; the whole model IS the language model). Treat these as
+        language-kind.
+      - Vision towers nested under `vision_tower.` are vision-kind.
+    """
     if "vision_tower" in name:
         return "vision"
     if "language_model" in name:
+        return "language"
+    # Default: if the module sits under `.layers.<int>.` (transformer block)
+    # in a model with no explicit vision tower, treat as language.
+    if ".layers." in name:
         return "language"
     return "other"
 
@@ -224,7 +236,11 @@ def attach_lora_to_ar(
     layer_ell: int,
     rank: int = 16,
     alpha: int = 32,
-    targets: Iterable[str] = ("q_proj", "k_proj", "v_proj", "o_proj"),
+    targets: Iterable[str] = (
+        "q_proj", "k_proj", "v_proj", "o_proj",   # standard attention
+        "in_proj_qkv", "out_proj",                # Qwen 3.5 Gated DeltaNet
+        "gate_proj", "up_proj", "down_proj",      # MLP
+    ),
     include_vision_tower: bool = True,
     include_language_first_ell: bool = True,
     verbose: bool = True,
@@ -242,7 +258,7 @@ def attach_lora_to_ar(
         include_vision_tower=include_vision_tower,
         include_language_first_ell=include_language_first_ell,
         language_layer_limit=layer_ell,
-        accept_classes=("Gemma4ClippableLinear", "Linear"),
+        accept_classes=("Linear",),  # v2.0: Qwen uses plain nn.Linear throughout; v1.x used Gemma4ClippableLinear in vision tower (only relevant if AR is used)
         verbose=verbose,
     )
 
@@ -252,7 +268,14 @@ def attach_lora_to_av(
     first_n_layers: int = 8,
     rank: int = 16,
     alpha: int = 32,
-    targets: Iterable[str] = ("q_proj", "k_proj", "v_proj", "o_proj"),
+    targets: Iterable[str] = (
+        # Gemma 4 / standard-attention: q/k/v/o projections
+        "q_proj", "k_proj", "v_proj", "o_proj",
+        # Qwen 3.5 Gated DeltaNet (linear-attention) layers
+        "in_proj_qkv", "out_proj",
+        # Qwen 3.5 mixes hybrid: also covers MLP for added capacity (cheap on H200)
+        "gate_proj", "up_proj", "down_proj",
+    ),
     verbose: bool = True,
 ) -> list[LoRADelta]:
     """Attach LoRA to the AV's first N language layers (and ONLY the language model).

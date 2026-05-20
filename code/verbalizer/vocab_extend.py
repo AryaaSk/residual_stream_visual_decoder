@@ -57,7 +57,7 @@ def extend_model_and_tokenizer(
 def main():
     """Smoke test: load Gemma 4 E2B, extend vocab, verify shapes."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-id", default="google/gemma-4-e2b-it")
+    parser.add_argument("--model-id", default="Qwen/Qwen3.5-4B")
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
 

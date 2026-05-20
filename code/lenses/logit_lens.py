@@ -9,8 +9,8 @@ Usage
     from transformers import AutoModelForCausalLM, AutoTokenizer
     from lenses.logit_lens import LogitLens
 
-    model = AutoModelForCausalLM.from_pretrained("google/gemma-4-e2b-it", ...).cuda()
-    tok = AutoTokenizer.from_pretrained("google/gemma-4-e2b-it")
+    model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen3.5-4B", ...).cuda()
+    tok = AutoTokenizer.from_pretrained("Qwen/Qwen3.5-4B")
     lens = LogitLens(model, tok)
 
     trajectory = lens.trajectory("The capital of France is")
@@ -85,7 +85,7 @@ def main():
     """Smoke test: run logit lens on a single prompt."""
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-id", default="google/gemma-4-e2b-it")
+    parser.add_argument("--model-id", default="Qwen/Qwen3.5-4B")
     parser.add_argument("--prompt", default="The capital of France is")
     parser.add_argument("--top-k", type=int, default=5)
     args = parser.parse_args()

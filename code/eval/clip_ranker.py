@@ -67,7 +67,7 @@ def load_clip():
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--av-ckpt", type=Path, required=True)
-    p.add_argument("--model-id", default="google/gemma-4-e2b-it")
+    p.add_argument("--model-id", default="Qwen/Qwen3.5-4B")
     p.add_argument("--layer", type=int, required=True)
     p.add_argument("--alpha", type=float, default=0.5)
     p.add_argument("--n-samples", type=int, default=32)

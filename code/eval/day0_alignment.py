@@ -41,7 +41,7 @@ import numpy as np
 import torch
 from PIL import Image, ImageDraw
 
-MODEL_ID_DEFAULT = "google/gemma-4-e2b-it"
+MODEL_ID_DEFAULT = "Qwen/Qwen3.5-4B"
 
 # 50 concepts that exist in QuickDraw's categories (so we can use REAL human
 # drawings for the image side of day-0). Procedural fallback works for anything,

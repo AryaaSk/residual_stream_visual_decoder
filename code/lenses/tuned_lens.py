@@ -36,7 +36,7 @@ def load_text_corpus(n: int) -> list[str]:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-id", default="google/gemma-4-e2b-it")
+    parser.add_argument("--model-id", default="Qwen/Qwen3.5-4B")
     parser.add_argument("--out", type=Path, default=Path("checkpoints/tuned_lens.pt"))
     parser.add_argument("--steps", type=int, default=500)
     parser.add_argument("--batch-size", type=int, default=8)

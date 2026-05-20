@@ -7,7 +7,7 @@ Questions answered:
     - At which layer ℓ are activations MOST discriminative across prompts?
 
 Run as:
-    python code/eval/activation_geometry.py --model-id google/gemma-4-e2b-it
+    python code/eval/activation_geometry.py --model-id Qwen/Qwen3.5-4B
 """
 
 from __future__ import annotations
@@ -56,7 +56,7 @@ DIVERSE_PROMPTS = [
 @torch.no_grad()
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-id", default="google/gemma-4-e2b-it")
+    parser.add_argument("--model-id", default="Qwen/Qwen3.5-4B")
     parser.add_argument("--layers", type=int, nargs="+", default=None,
                         help="If given, only analyse these layers. Else all.")
     parser.add_argument("--out", type=Path, default=Path("findings/activation_geometry.json"))

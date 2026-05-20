@@ -43,7 +43,7 @@ DEFAULT_ALPHAS = [0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0]
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--av-ckpt", type=Path, required=True)
-    parser.add_argument("--model-id", default="google/gemma-4-e2b-it")
+    parser.add_argument("--model-id", default="Qwen/Qwen3.5-4B")
     parser.add_argument("--layer", type=int, default=16)
     parser.add_argument("--out-dir", type=Path, default=Path("findings/alpha_sweep"))
     parser.add_argument("--alphas", type=float, nargs="+", default=DEFAULT_ALPHAS)

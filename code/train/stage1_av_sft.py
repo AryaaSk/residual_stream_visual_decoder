@@ -37,7 +37,7 @@ from stroke_tokenizer import DRAW_OPEN, DRAW_CLOSE  # noqa: E402
 
 @dataclass
 class SFTConfig:
-    model_id: str = "google/gemma-4-e2b-it"
+    model_id: str = "Qwen/Qwen3.5-4B"
     corpus_path: Path = Path("data/sft_quickdraw.jsonl")
     out_dir: Path = Path("checkpoints/av_sft")
     batch_size: int = 8

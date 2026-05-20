@@ -95,7 +95,7 @@ HELDOUT_PROBES = [
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
-    p.add_argument("--model-id", default="google/gemma-4-e2b-it")
+    p.add_argument("--model-id", default="Qwen/Qwen3.5-4B")
     p.add_argument("--layer", type=int, required=True)
     p.add_argument("--av-ckpt", type=Path, required=True,
                    help="Path to Stage-1 SFT'd AV checkpoint dir (with av_ckpt.pt)")

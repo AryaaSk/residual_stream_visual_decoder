@@ -58,7 +58,7 @@ def main():
     p.add_argument("--ckpts-root", type=Path, required=True,
                    help="Dir containing per-layer subdirs like LNN/final/av_ckpt.pt")
     p.add_argument("--layers", type=int, nargs="+", default=[3, 12, 24])
-    p.add_argument("--model-id", default="google/gemma-4-e2b-it")
+    p.add_argument("--model-id", default="Qwen/Qwen3.5-4B")
     p.add_argument("--alpha", type=float, default=0.5)
     p.add_argument("--av-max-tokens", type=int, default=200)
     p.add_argument("--display-scale", type=float, default=4.0)

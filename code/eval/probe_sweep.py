@@ -94,7 +94,7 @@ DEFAULT_PROBE_SET = [
 @torch.no_grad()
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-id", default="google/gemma-4-e2b-it")
+    parser.add_argument("--model-id", default="Qwen/Qwen3.5-4B")
     parser.add_argument("--layer", type=int, required=True)
     parser.add_argument("--av-ckpt", type=Path, required=True)
     parser.add_argument("--out-dir", type=Path, default=Path("artefacts/per_probe"))

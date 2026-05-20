@@ -138,7 +138,7 @@ def render_probe(av: StrokeDecoder, captions: list[tuple[str, str]], layer_ell: 
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--model-id", default="google/gemma-4-e2b-it")
+    p.add_argument("--model-id", default="Qwen/Qwen3.5-4B")
     p.add_argument("--layer", type=int, required=True)
     p.add_argument("--av-init-ckpt", type=Path, default=Path("checkpoints/av_sft/final"))
     p.add_argument("--data", type=Path, default=Path("data/sft_quickdraw.jsonl"))
