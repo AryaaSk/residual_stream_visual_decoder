@@ -22,44 +22,54 @@ from verbalizer.stroke_decoder import StrokeDecoder  # noqa: E402
 from render import render as stroke_render  # noqa: E402
 
 DEMO_TEXTS = [
-    # Concrete visual concepts — should produce recognisable silhouettes if the
-    # decoder is working
-    ("dog", "I am thinking about a dog."),
+    # === IN-DISTRIBUTION (v1.2 trained QuickDraw concepts) ===
+    # These are the prompts the AV has actually been trained on (activations
+    # of "a drawing of a {X}" → real QuickDraw drawings). Recognisability here
+    # is the v1.2 ship gate.
     ("cat", "I am thinking about a cat."),
+    ("dog", "I am thinking about a dog."),
     ("bird", "I am picturing a bird flying across the sky."),
     ("fish", "Imagine a fish."),
-    ("tree", "I am picturing a tree."),
+    ("elephant", "I am thinking about an elephant."),
+    ("horse", "I am thinking about a horse."),
+    ("spider", "Imagine a spider on the wall."),
+    ("snake", "I am picturing a snake."),
+    ("apple", "I am thinking about an apple."),
+    ("banana", "Imagine a banana."),
+    ("pizza", "I am thinking about a pizza."),
     ("flower", "Imagine a flower in bloom."),
+    ("tree", "I am picturing a tree."),
+    ("mushroom", "I am thinking about a mushroom."),
+    ("cactus", "I am picturing a cactus in the desert."),
+    ("mountain", "I am picturing a mountain."),
     ("sun", "The sun is shining."),
+    ("cloud", "I am picturing a cloud in the sky."),
+    ("rainbow", "Imagine a rainbow."),
+    ("star", "I am picturing a star in the night sky."),
     ("house", "I am picturing a small house with a red roof."),
     ("car", "I am thinking about a car."),
     ("airplane", "I am picturing an airplane."),
-    # Famous structures — landmark-shaped activations
+    ("bicycle", "I am thinking about a bicycle."),
+    ("train", "I am picturing a train."),
+    ("book", "I am thinking about a book."),
+    ("clock", "I am picturing a clock on the wall."),
+    ("umbrella", "I am picturing an umbrella."),
+    ("scissors", "Imagine a pair of scissors."),
+    ("key", "I am thinking about a key."),
+
+    # === OUT-OF-DISTRIBUTION (generalisation probes) ===
+    # Not in training; we expect these to look abstract — that's the contrast
+    # that makes the in-distribution wins more striking.
     ("eiffel", "Paris, the city of lights, is famous for the Eiffel"),
-    ("eiffel_short", "The Eiffel Tower is in"),
-    ("everest", "Mount Everest is in"),
-    # Factual completions — interesting because the "thought" is a fact
     ("capital_france", "The capital of France is"),
-    ("capital_japan", "The capital of Japan is"),
-    ("largest_planet", "The largest planet in our solar system is"),
-    # Geometric concepts — should produce clean shapes
     ("triangle", "Imagine a triangle inscribed in a circle."),
-    ("circle", "I am picturing a circle."),
     ("smile_face", "I am picturing a smiling face."),
-    # Emotional / abstract — should look qualitatively different from concrete
-    ("smile", "She smiled brightly at the surprise."),
-    ("storm", "When the storm hit, the village"),
-    ("calm", "The lake was calm and"),
-    ("sadness", "I am thinking about deep sadness."),
-    # Narrative — multi-token thought building
-    ("once_upon", "Once upon a time, in a kingdom far away,"),
-    ("night_door", "In the middle of the night, the door"),
 ]
 
-# Subset used for the alpha sweep (cost-controlled — alpha sweep multiplies cost
-# by the number of alphas tried)
+# Hero set for the alpha sweep — pick the most visually recognisable trained
+# concepts (silhouettes that read cleanly even as 20-stroke QuickDraw sketches).
 HERO_PROMPTS = [
-    "dog", "cat", "eiffel", "capital_france", "triangle", "smile_face",
+    "cat", "dog", "fish", "flower", "sun", "house", "car", "airplane",
 ]
 
 

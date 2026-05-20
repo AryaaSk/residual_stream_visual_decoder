@@ -98,8 +98,14 @@ def main():
             print(f"  step {step:2d}: tokens so far ({len(partial_tokens)}): {partial_text[-80:]!r}  strokes={len(strokes)}",
                   flush=True)
 
-            # Take Gemma's next predicted token (greedy)
-            next_logits = out.logits[0, -1, :]
+            # Take Gemma's next predicted token (greedy).
+            # CRITICAL: mask out the 262 stroke-vocab IDs so the caption doesn't
+            # leak "<DX_092><PEN_UP>..." tokens (v1.1 bug fix). The AV's
+            # extended vocab includes our stroke tokens; the TARGET model should
+            # only ever emit normal Gemma text tokens.
+            next_logits = out.logits[0, -1, :].clone()
+            stroke_ids = list(av.vocab.name_to_id.values())
+            next_logits[stroke_ids] = float("-inf")
             next_id = int(next_logits.argmax().item())
             partial_tokens.append(next_id)
             decoded = av.tokenizer.decode([next_id])

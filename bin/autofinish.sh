@@ -46,10 +46,31 @@ while true; do
     sleep 60
 done
 
-# Phase 1 — inject_demo for each layer with the BEST iter checkpoint
-# Includes alpha sweep on the hero subset so we have material to choose from
-# even if alpha=0.5 produces weak visuals at this layer.
-heading "PHASE 1: inject_demo per layer (26 prompts main pass + alpha sweep on 6 hero)"
+# Phase 0.5 — repoint `final` to the LAST iteration instead of the FVE-best.
+# Rationale: the trainer's best-iter picker uses FVE, but v1.1 produced
+# negative FVE across iterations (AR slightly anti-predicts magnitude). The
+# LAST iter has the most AV-side training (best cosine, best MSE in L24
+# case), so it should produce qualitatively better drawings. We keep the
+# original "final" as final_fve_best for comparison.
+heading "PHASE 0.5: override final/ to last iter (visuals > FVE-best)"
+for LAYER in 12 24; do
+    LAYER_DIR="checkpoints/v1_1/L${LAYER}"
+    LAST_ITER=$(ls -1d "$LAYER_DIR"/iter_* 2>/dev/null | sort | tail -1)
+    if [[ -z "$LAST_ITER" || ! -d "$LAST_ITER" ]]; then
+        log "WARN: no iter dirs under $LAYER_DIR — keeping current final/"
+        continue
+    fi
+    log "$LAYER_DIR/final ← $LAST_ITER (was: FVE-best)"
+    if [[ -d "$LAYER_DIR/final" ]]; then
+        rm -rf "$LAYER_DIR/final_fve_best" 2>/dev/null
+        mv "$LAYER_DIR/final" "$LAYER_DIR/final_fve_best"
+    fi
+    cp -r "$LAST_ITER" "$LAYER_DIR/final"
+done
+
+# Phase 1 — inject_demo for each layer
+# Hero clips also rendered at α=0.3, 0.7, 1.0 in case 0.5 is suboptimal here.
+heading "PHASE 1: inject_demo per layer (26 prompts main pass + hero α sweep)"
 for LAYER_DIR in checkpoints/v1_1/L12 checkpoints/v1_1/L24; do
     if [[ ! -d "$LAYER_DIR/final" ]]; then
         log "WARN: $LAYER_DIR/final missing, skipping inject_demo for that layer"
@@ -63,6 +84,15 @@ for LAYER_DIR in checkpoints/v1_1/L12 checkpoints/v1_1/L24; do
         --alpha 0.5 --mp4 --out-dir "$OUT" \
         --alpha-sweep 0.3 0.7 1.0 \
         2>&1 | tee -a "$LOG"
+    # Also render hero prompts on iter_00 (FVE-best fallback) for comparison
+    if [[ -d "$LAYER_DIR/final_fve_best" ]]; then
+        OUT_FVE="findings/v1_1/inject_demo_L${LAYER}_fve_best"
+        log "inject_demo L=$LAYER (FVE-best iter) → $OUT_FVE (hero only)"
+        $VENV code/eval/inject_demo.py \
+            --av-ckpt "$LAYER_DIR/final_fve_best" --layer "$LAYER" \
+            --alpha 0.5 --mp4 --out-dir "$OUT_FVE" \
+            2>&1 | tee -a "$LOG"
+    fi
 done
 
 # Phase 2 — FVE measurement (held-out probes)

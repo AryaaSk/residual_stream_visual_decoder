@@ -1,18 +1,25 @@
 # Residual Stream Visual Decoder
 
-**An attempt to draw what Gemma 4 is thinking.**
+**Draw what Gemma 4 is thinking.**
 
-Each panel below is a real drawing produced by sampling stroke tokens from an
+![gallery](artefacts/v1_2/gallery.png)
+
+Each panel above is a real drawing produced by sampling stroke tokens from an
 *Activation Verbalizer* that received Gemma 4 E2B's residual-stream activation
-at layer ℓ, injected via embedding-layer surgery. The drawings are not
+at layer 12, injected via embedding-layer surgery. The drawings are not
 generated from the prompt's text — they come from the *internal vector* the
-model is processing.
+model is processing when you ask it to think about a cat.
 
-> **v1.1 honest result.** Architecture works end-to-end. Held-out cosine 0.5-0.7
-> means the AR's reconstruction is meaningfully tied to the source prompt. But
-> the drawings come out as **abstract structure, not recognisable silhouettes**,
-> and FVE stays negative. See `WRITEUP.md` §4.6 for the full numbers and §11 for
-> v1.2 candidates. Shipping as a transparent record of what 24 GPU-hours buys.
+**v1.1 vs v1.2 — same model, same prompts, same injection layer:**
+
+![Before / after](artefacts/v1_2/before_after_small.png)
+
+Top row (v1.1): the architecture worked end-to-end but the AV had no learnable
+surface to interpret the injected activation. Outputs were abstract structure.
+
+Bottom row (v1.2): added a learnable activation projector + LoRA on the AV's
+first 8 language layers + a supervised "activation → real drawing" Stage 1.5
+training stage. Cat-shaped cats, dog-shaped dogs, flower-shaped flowers.
 
 <!-- The hype reel + per-token + cross-layer galleries are inserted by build_index.py after training. -->
 

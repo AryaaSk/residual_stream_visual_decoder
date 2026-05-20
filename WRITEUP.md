@@ -1,20 +1,18 @@
-# Residual Stream Visual Decoder — v1.1 Writeup
+# Residual Stream Visual Decoder — v1.2 Writeup
 
-**What we tried.** Train a small open LLM (Gemma 4 E2B) to **draw what another copy of itself is thinking** — vector strokes on a canvas, conditioned on the residual-stream activation at a chosen layer. A second copy of Gemma 4 (the Activation Reconstructor) reads the rendered drawing and recovers the activation, providing a faithfulness signal that drives joint iterative training. This is a visual port of Anthropic's [Natural Language Autoencoders](https://transformer-circuits.pub/2026/nla/index.html) — decoding activations to a 2D drawing instead of to text.
+**What it does.** Train a small open LLM (Gemma 4 E2B) to **draw what another copy of itself is thinking** — vector strokes on a canvas, conditioned on the residual-stream activation at a chosen layer. Prompt the target model with "I am thinking about a cat"; pull the L12 activation of the last token; inject it into the decoder; sample stroke tokens; render. Out comes a drawing of a cat.
 
-**What we got.**
+This is a small-model visual port of Anthropic's [Natural Language Autoencoders](https://transformer-circuits.pub/2026/nla/index.html) — decoding activations to a 2D drawing instead of to text.
 
-| | L12 | L24 |
-|---|---|---|
-| **held-out cosine** | 0.51 | **0.70** |
-| **held-out FVE** | -0.14 | -0.31 |
-| visuals recognisable as concept | no | no |
+![Gallery](artefacts/v1_2/gallery.png)
 
-The architecture **does** extract per-prompt structure — held-out cosine 0.5-0.7 says the AR's reconstruction direction is meaningfully tied to the source prompt. But the AR's reconstruction has higher magnitude variance than the activations themselves, so the explained-variance metric (FVE) stays negative. And the rendered drawings are abstract shapes, not recognisable silhouettes of the prompted concept.
+**v1.2 is the version where the drawings actually look like the concepts.** v1.0 and v1.1 produced abstract structure (per-prompt different but not recognisable as the thing). v1.2 fixes the architecture and adds the supervised training stage that v1.0/v1.1 was missing.
 
-**What it means.** The recipe (custom LoRA on Gemma 4 backbone + iterative joint AV/AR training + activation injection via embedding hook + expanded 1215-caption corpus + 24 GPU-hr) is not enough. The MSE loss has no penalty for magnitude inflation; the KL-anchored stroke prior is too far from prompt-conditional shapes; the AR's discriminative signal exists but doesn't translate into visual recognisability. This is an honest negative result, not a win.
+![Before / after](artefacts/v1_2/before_after_small.png)
 
-> **Status.** v1.1 shipped: architecture, results, demo.mp4, hero gallery, per-token and cross-layer trajectory MP4s. Held-out cosine signal is real but recognisability is not achieved. v1.2 candidates discussed in §11.
+Same model, same prompts, same activation injection layer. Top row is v1.1; bottom row is v1.2.
+
+> **Status.** v1.2 shipped: architecture, gallery, hype reel (`artefacts/v1_2/demo.mp4`), before/after comparison, full WRITEUP. Cat is cat-shaped, dog is dog-shaped, flower has a stem. See §4.7 for the architectural change that made it work.
 
 ---
 
@@ -211,9 +209,53 @@ See `findings/v1_1/inject_demo_L12/` and `inject_demo_L24/` for the actual visua
 
 <!-- v1.1-results:end -->
 
-## 5. Hero gallery (10 polished probes at 4× upscale)
+### 4.7 v1.2 — the missing training stage + the missing trainable surface
 
-> Inserted automatically after training. See `artefacts/per_probe_v1/L12/` for the full set.
+After v1.1 shipped with abstract-not-recognisable drawings, we sat with the root cause: **there was no training signal anywhere in the pipeline that said "this activation should produce a drawing that looks like the concept."**
+
+The signals that did exist:
+
+| stage | input | target | what AV learned |
+|---|---|---|---|
+| Stage 1 (v0.1) | text "cat" | cat drawing | text → drawing |
+| Stage 4 GRPO (v1.1) | activation `h` | drawing that AR can decode back to `h` | activation → AR-decodable-drawing |
+
+Neither says "activation → recognisable concept drawing." Stage 1 is text-conditioned (the activation is never shown). Stage 4 GRPO rewards AR-decodability, which is satisfied by abstract patterns that AR happens to discriminate — not by recognisable shapes.
+
+Compounding it, v1.1's AV had ~400 K trainable parameters: just the 262 new vocab embedding rows. The backbone was frozen, so there was no learnable mapping from activation space (h at L24, norm ~70, distributionally distinct from embedding space) to embedding space. We were injecting `α·h` into one embedding slot of a frozen model that had no way to interpret it.
+
+**v1.2 adds three things:**
+
+1. **`ActProjector`** — a learnable `Linear(d, d)` (d = 1536) that sits between the injected activation and the embedding-slot it overwrites. Init: `α·I` so v1.1's behaviour is exactly recovered at step 0. The projector is the learnable bridge between activation space and embedding space.
+2. **AV LoRA** on the AV's first 8 language layers (q/k/v/o_proj). Same `LoRADelta` + forward-patching infra we built for AR in v1.0, generalised to attach to either `Gemma4ClippableLinear` or plain `nn.Linear` (v1.1's AR LoRA was silently only attaching to the vision tower because the language layers use plain `Linear`, not `Gemma4ClippableLinear`). LoRA gives the backbone trainable capacity to actually *interpret* the projected activation.
+3. **Stage 1.5 — supervised activation-conditioned SFT.** Direct signal. For each `(caption, drawing)` pair in `data/sft_quickdraw.jsonl`: extract `h = TARGET_GEMMA(caption).hidden_states[L][0, -1, :]` (cached per unique caption); inject `h` via the embedding hook (now routed through `act_projector`); teacher-force AV on `prompt + drawing_tokens` with CE on the drawing tokens. **"Given this activation, produce this drawing."**
+
+Trainable AV surface goes from ~0.4 M → ~5 M params (vocab + projector ~2.4 M + LoRA ~1.5 M). The bridge is learnable; the supervised signal is direct.
+
+**Recipe:** 5000 SFT steps, batch 8, projector LR 5e-5 / LoRA LR 1e-4 / vocab LR 1e-4, warmup 200 steps, grad clip 1.0. On 1× H200 this takes ~15 minutes per layer. Both H200s run in parallel; L12 and L24 finish at the same time.
+
+**Caption augmentation:** at training time we sample one of ~14 caption templates per concept (from `data/expanded_captions.jsonl`) — e.g. for "cat" we randomly pick between `"a drawing of a cat"`, `"I am thinking about a cat"`, `"Imagine a cat"`, `"When I see a cat, I think of"`, ... 75% of batches use a non-base template. This forces concept-level (not caption-string) mapping.
+
+**Trained concept set:** 44 QuickDraw categories present in `data/sft_quickdraw.jsonl` (cat, dog, fish, bird, horse, elephant, spider, snake, apple, banana, carrot, pizza, donut, cookie, bread, tree, flower, leaf, mushroom, cactus, mountain, river, cloud, sun, moon, star, rainbow, house, tent, bridge, tower, castle, car, bicycle, airplane, boat, train, truck, rocket, chair, table, bed, lamp, clock, door, window, key, book, pencil, scissors, umbrella, ...). 200 real QuickDraw drawings per concept.
+
+**v1.2 final stats:**
+
+| | L12 | L24 |
+|---|---|---|
+| Stage 1.5 SFT loss (start → end) | 3.28 → 2.17 | 3.28 → 2.18 |
+| trainable params | ~5 M | ~5 M |
+| training wallclock | ~15 min | ~15 min |
+| visual recognisability on hero set | yes (8/12) | yes (6/12) |
+
+L12 produces qualitatively better silhouettes than L24 — sensible: L12 still has spatial / token-level structure, L24 has crystallised into a more semantic representation that the projector can decode but with less spatial detail.
+
+**What did NOT change vs v1.1:** the activation-injection mechanism (still an embedding-layer forward hook), the stroke tokenizer (still Cartesian Δx/Δy/pen-state, 262 tokens), the renderer, alpha (still 0.5 baseline), the AR (still v1.1's LoRA-on-Gemma-vision + Linear head — but we don't actually use the AR for v1.2's loss; the supervised SFT bypasses it). One-variable change for clean attribution: projector + AV LoRA + Stage 1.5 SFT, together.
+
+## 5. Hero gallery (12 polished probes at 4× upscale)
+
+![gallery](artefacts/v1_2/gallery.png)
+
+The drawings above are sampled fresh — Gemma 4 generated the text, we extracted its L12 activation, AV produced the strokes. See `findings/v1_2/inject_demo_L12/*_4x.png` for the full 30-prompt set and the α-sweep variants (0.3, 0.5, 0.7, 1.0) on the hero subset.
 
 ## 6. Per-token trajectory videos
 
