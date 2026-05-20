@@ -1,0 +1,800 @@
+{
+  "model_id": "Qwen/Qwen3.5-4B",
+  "n_concepts": 44,
+  "n_train": 440,
+  "n_test": 176,
+  "concepts": [
+    "airplane",
+    "apple",
+    "banana",
+    "bed",
+    "bicycle",
+    "bird",
+    "book",
+    "bread",
+    "bridge",
+    "cactus",
+    "car",
+    "carrot",
+    "cat",
+    "chair",
+    "clock",
+    "cloud",
+    "cookie",
+    "dog",
+    "donut",
+    "door",
+    "elephant",
+    "fish",
+    "flower",
+    "horse",
+    "house",
+    "key",
+    "leaf",
+    "moon",
+    "mountain",
+    "mushroom",
+    "pencil",
+    "pizza",
+    "rainbow",
+    "scissors",
+    "snake",
+    "spider",
+    "star",
+    "sun",
+    "table",
+    "tent",
+    "train",
+    "tree",
+    "truck",
+    "umbrella"
+  ],
+  "layers": [
+    3,
+    10,
+    20,
+    29
+  ],
+  "per_layer": {
+    "3": {
+      "train_accuracy": 1.0,
+      "test_accuracy": 0.6761363636363636,
+      "test_top5": 0.7102272727272727,
+      "fit_seconds": 2.5460915565490723,
+      "per_concept": {
+        "airplane": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "apple": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "banana": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "bed": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "bicycle": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "bird": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "book": {
+          "n_test": 4,
+          "accuracy": 0.25
+        },
+        "bread": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "bridge": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "cactus": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "car": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "carrot": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "cat": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "chair": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "clock": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "cloud": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "cookie": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "dog": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "donut": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "door": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "elephant": {
+          "n_test": 4,
+          "accuracy": 0.25
+        },
+        "fish": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "flower": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "horse": {
+          "n_test": 4,
+          "accuracy": 0.25
+        },
+        "house": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "key": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "leaf": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "moon": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "mountain": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "mushroom": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "pencil": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "pizza": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "rainbow": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "scissors": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "snake": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "spider": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "star": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "sun": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "table": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "tent": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "train": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "tree": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "truck": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "umbrella": {
+          "n_test": 4,
+          "accuracy": 0.75
+        }
+      },
+      "h_norm_mean": 3.7066242694854736
+    },
+    "10": {
+      "train_accuracy": 1.0,
+      "test_accuracy": 0.7215909090909091,
+      "test_top5": 0.7784090909090909,
+      "fit_seconds": 1.949721336364746,
+      "per_concept": {
+        "airplane": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "apple": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "banana": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "bed": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "bicycle": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "bird": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "book": {
+          "n_test": 4,
+          "accuracy": 0.25
+        },
+        "bread": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "bridge": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "cactus": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "car": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "carrot": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "cat": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "chair": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "clock": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "cloud": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "cookie": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "dog": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "donut": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "door": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "elephant": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "fish": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "flower": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "horse": {
+          "n_test": 4,
+          "accuracy": 0.25
+        },
+        "house": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "key": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "leaf": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "moon": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "mountain": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "mushroom": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "pencil": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "pizza": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "rainbow": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "scissors": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "snake": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "spider": {
+          "n_test": 4,
+          "accuracy": 0.25
+        },
+        "star": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "sun": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "table": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "tent": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "train": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "tree": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "truck": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "umbrella": {
+          "n_test": 4,
+          "accuracy": 0.75
+        }
+      },
+      "h_norm_mean": 9.148364067077637
+    },
+    "20": {
+      "train_accuracy": 1.0,
+      "test_accuracy": 0.7784090909090909,
+      "test_top5": 0.8636363636363636,
+      "fit_seconds": 2.079178810119629,
+      "per_concept": {
+        "airplane": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "apple": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "banana": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "bed": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "bicycle": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "bird": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "book": {
+          "n_test": 4,
+          "accuracy": 0.25
+        },
+        "bread": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "bridge": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "cactus": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "car": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "carrot": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "cat": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "chair": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "clock": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "cloud": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "cookie": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "dog": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "donut": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "door": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "elephant": {
+          "n_test": 4,
+          "accuracy": 0.25
+        },
+        "fish": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "flower": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "horse": {
+          "n_test": 4,
+          "accuracy": 0.25
+        },
+        "house": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "key": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "leaf": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "moon": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "mountain": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "mushroom": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "pencil": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "pizza": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "rainbow": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "scissors": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "snake": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "spider": {
+          "n_test": 4,
+          "accuracy": 0.25
+        },
+        "star": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "sun": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "table": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "tent": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "train": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "tree": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "truck": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "umbrella": {
+          "n_test": 4,
+          "accuracy": 0.75
+        }
+      },
+      "h_norm_mean": 17.23087501525879
+    },
+    "29": {
+      "train_accuracy": 1.0,
+      "test_accuracy": 0.8465909090909091,
+      "test_top5": 0.8920454545454546,
+      "fit_seconds": 1.9473826885223389,
+      "per_concept": {
+        "airplane": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "apple": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "banana": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "bed": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "bicycle": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "bird": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "book": {
+          "n_test": 4,
+          "accuracy": 0.25
+        },
+        "bread": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "bridge": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "cactus": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "car": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "carrot": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "cat": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "chair": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "clock": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "cloud": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "cookie": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "dog": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "donut": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "door": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "elephant": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "fish": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "flower": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "horse": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "house": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "key": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "leaf": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "moon": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "mountain": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "mushroom": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "pencil": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "pizza": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "rainbow": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "scissors": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "snake": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "spider": {
+          "n_test": 4,
+          "accuracy": 0.5
+        },
+        "star": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "sun": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "table": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "tent": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "train": {
+          "n_test": 4,
+          "accuracy": 1.0
+        },
+        "tree": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "truck": {
+          "n_test": 4,
+          "accuracy": 0.75
+        },
+        "umbrella": {
+          "n_test": 4,
+          "accuracy": 0.75
+        }
+      },
+      "h_norm_mean": 44.9940071105957
+    }
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "layers": [
+    3,
+    10,
+    20,
+    29
+  ],
+  "prompts": [
+    {
+      "slug": "cat",
+      "prompt": "I am thinking about a cat.",
+      "clip_text": "a drawing of a cat",
+      "per_layer": {
+        "3": {
+          "clip_score": 29.297876358032227,
+          "n_strokes": 59
+        },
+        "10": {
+          "clip_score": 34.25434875488281,
+          "n_strokes": 79
+        },
+        "20": {
+          "clip_score": 29.36563491821289,
+          "n_strokes": 64
+        },
+        "29": {
+          "clip_score": 34.25434875488281,
+          "n_strokes": 79
+        }
+      }
+    },
+    {
+      "slug": "dog",
+      "prompt": "I am thinking about a dog.",
+      "clip_text": "a drawing of a dog",
+      "per_layer": {
+        "3": {
+          "clip_score": 29.167720794677734,
+          "n_strokes": 46
+        },
+        "10": {
+          "clip_score": 34.91511535644531,
+          "n_strokes": 61
+        },
+        "20": {
+          "clip_score": 30.319583892822266,
+          "n_strokes": 79
+        },
+        "29": {
+          "clip_score": 34.91511535644531,
+          "n_strokes": 61
+        }
+      }
+    },
+    {
+      "slug": "elephant",
+      "prompt": "I am thinking about an elephant.",
+      "clip_text": "a drawing of an elephant",
+      "per_layer": {
+        "3": {
+          "clip_score": 30.628999710083008,
+          "n_strokes": 79
+        },
+        "10": {
+          "clip_score": 36.7314567565918,
+          "n_strokes": 62
+        },
+        "20": {
+          "clip_score": 30.777437210083008,
+          "n_strokes": 79
+        },
+        "29": {
+          "clip_score": 36.63993453979492,
+          "n_strokes": 63
+        }
+      }
+    },
+    {
+      "slug": "flower",
+      "prompt": "Imagine a flower in bloom.",
+      "clip_text": "a drawing of a flower",
+      "per_layer": {
+        "3": {
+          "clip_score": 28.263357162475586,
+          "n_strokes": 37
+        },
+        "10": {
+          "clip_score": 35.68099594116211,
+          "n_strokes": 66
+        },
+        "20": {
+          "clip_score": 30.19005012512207,
+          "n_strokes": 79
+        },
+        "29": {
+          "clip_score": 35.68099594116211,
+          "n_strokes": 66
+        }
+      }
+    },
+    {
+      "slug": "sun",
+      "prompt": "The sun is shining.",
+      "clip_text": "a drawing of a sun",
+      "per_layer": {
+        "3": {
+          "clip_score": 29.268762588500977,
+          "n_strokes": 69
+        },
+        "10": {
+          "clip_score": 36.235164642333984,
+          "n_strokes": 71
+        },
+        "20": {
+          "clip_score": 28.948745727539062,
+          "n_strokes": 68
+        },
+        "29": {
+          "clip_score": 36.235164642333984,
+          "n_strokes": 71
+        }
+      }
+    },
+    {
+      "slug": "fish",
+      "prompt": "Imagine a fish.",
+      "clip_text": "a drawing of a fish",
+      "per_layer": {
+        "3": {
+          "clip_score": 30.402881622314453,
+          "n_strokes": 45
+        },
+        "10": {
+          "clip_score": 34.98597717285156,
+          "n_strokes": 45
+        },
+        "20": {
+          "clip_score": 30.025371551513672,
+          "n_strokes": 49
+        },
+        "29": {
+          "clip_score": 34.98597717285156,
+          "n_strokes": 45
+        }
+      }
+    },
+    {
+      "slug": "airplane",
+      "prompt": "I am picturing an airplane.",
+      "clip_text": "a drawing of an airplane",
+      "per_layer": {
+        "3": {
+          "clip_score": 31.061840057373047,
+          "n_strokes": 79
+        },
+        "10": {
+          "clip_score": 36.981178283691406,
+          "n_strokes": 53
+        },
+        "20": {
+          "clip_score": 31.68051528930664,
+          "n_strokes": 72
+        },
+        "29": {
+          "clip_score": 36.981178283691406,
+          "n_strokes": 53
+        }
+      }
+    },
+    {
+      "slug": "tree",
+      "prompt": "I am picturing a tree.",
+      "clip_text": "a drawing of a tree",
+      "per_layer": {
+        "3": {
+          "clip_score": 29.535058975219727,
+          "n_strokes": 47
+        },
+        "10": {
+          "clip_score": 35.40092086791992,
+          "n_strokes": 64
+        },
+        "20": {
+          "clip_score": 28.77790641784668,
+          "n_strokes": 49
+        },
+        "29": {
+          "clip_score": 35.40092086791992,
+          "n_strokes": 64
+        }
+      }
+    }
+  ]
+}

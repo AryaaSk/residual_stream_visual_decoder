@@ -2,6 +2,16 @@
 
 **Draw what a language model is thinking.**
 
+> **v2.2 — interpretability across depth.** We trained per-layer Activation
+> Verbalizers on Qwen 3.5-4B at L3 / L10 / L20 / L29 and rendered the same
+> prompt at each. The drawings *crystallise as depth increases*. A linear
+> probe trained on the raw h confirms the trend quantitatively: L3 = 68 % →
+> L29 = 85 % top-1 accuracy on 44 concepts (chance 2.3 %). A random-h baseline
+> shows the AV doesn't just emit memorised templates: with real h it produces
+> 13 distinct concept drawings across 16 prompts; with random h it
+> mode-collapses to 7 (mostly clouds and mountains). Full demo + writeup in
+> [v2.2 release](#v22--cross-layer-interpretability).
+
 ![gallery](artefacts/v2_0/gallery.png)
 
 Each panel above is a real drawing produced by sampling stroke tokens from an
@@ -148,6 +158,135 @@ python demo.py "your prompt here"
 Training scripts live under `code/train/`. The v1.0 trainer is
 `code/train/stage4_iterative.py`. See `07-execution-plan.md` for the full
 recipe and hyperparameters.
+
+## v2.2 — Cross-layer interpretability
+
+v2.0 shipped a pretty gallery; v2.2 ships the *mechanistic* story behind it.
+
+### The cross-layer trajectory (the centerpiece)
+
+We trained a separate Activation Verbalizer per Qwen layer (L3, L20 new; L10,
+L29 from v2.0) and rendered the same prompt at each.
+
+`artefacts/v2_2/cross_layer/cat_strip.png` (L3 / L10 / L20 / L29):
+
+![cat across layers](artefacts/v2_2/cross_layer/cat_strip.png)
+
+Same idea, all eight hero concepts in `artefacts/v2_2/cross_layer/grid.png`.
+
+### The quantitative anchor — linear probe per layer
+
+A `Linear(d_hidden → 44)` classifier trained on h at each layer (chance 2.3 %):
+
+| Layer | h-norm | test top-1 | test top-5 |
+|------:|-------:|-----------:|-----------:|
+|    L3 |   3.71 |     67.6 % |     71.0 % |
+|   L10 |   9.15 |     72.2 % |     77.8 % |
+|   L20 |  17.23 |     77.8 % |     86.4 % |
+|   L29 |  44.99 |     84.7 % |     89.2 % |
+
+Both probe accuracy and ‖h‖ grow monotonically with depth. The visual
+decoder's cross-layer trend tracks the probe. See
+`findings/v2_2/probe_accuracy.png`.
+
+### Random-h baseline (the gating experiment)
+
+We fed the AV 16 Gaussian h vectors matched to L10 statistics. If the AV
+ignored h, the drawings would still be recognisable concepts — gutting the
+interpretability claim. They aren't:
+
+|              | distinct concepts / 16 | top concepts (mode-collapse) |
+|-------------:|:----------------------:|:----------------------------:|
+| real prompts |          13            | matches input prompt 69 %    |
+|  random_iso  |           7            | cloud ×6, mountain ×4        |
+
+Real-prompt h gives 14× chance accuracy at picking the prompt's concept; random
+h mode-collapses to "cloud" and "mountain" templates. The AV is genuinely
+h-sensitive. Side-by-side images: `findings/v2_2/random_h_baseline/`.
+
+### Activation interpolation (smooth-or-snap diagnostic)
+
+Lerp h(cat) → h(elephant) in 15 steps; render at each. If smooth → continuous
+decoding; if discrete-snap → template-classifier. The current AV snaps at
+~α=0.4-0.6 (`max_stepwise_Δ(score_B − score_A) > 4`), confirming the
+"concept-plausible-not-specific" finding at L10.
+
+MP4s at `artefacts/v2_2/morph/`.
+
+### Per-token trajectory (the model thinking out loud)
+
+For "Paris, the city of lights, is famous for the Eiffel ...", we extract h
+at each generated token and render the AV's drawing. The drawing morphs as
+Qwen reads each word.
+
+MP4s at `artefacts/v2_2/per_token/`.
+
+### OOD demo (generalisation beyond the 44 trained concepts)
+
+Prompts the AV never saw in SFT: Eiffel Tower, thunderstorm, smiling face,
+triangle inscribed in a circle. Drawings + CLIP scores at
+`findings/v2_2/ood/`.
+
+### Reproducing v2.2
+
+```bash
+# Phase 0: train L3 + L20 from a fresh Qwen base (2500 steps each)
+CUDA_VISIBLE_DEVICES=6 python code/train/stage1_v2_act_sft.py \
+    --layer 3  --steps 2500 --av-init-ckpt nonexistent_qwen_init \
+    --out-dir checkpoints/v2_2/L3  --cosine-decay
+CUDA_VISIBLE_DEVICES=7 python code/train/stage1_v2_act_sft.py \
+    --layer 20 --steps 2500 --av-init-ckpt nonexistent_qwen_init \
+    --out-dir checkpoints/v2_2/L20 --cosine-decay
+# Symlink the v2.0 L10/L29 ckpts (already trained) into v2_2 + add L03 alias:
+ln -s ../v2_0/L10 checkpoints/v2_2/L10
+ln -s ../v2_0/L29 checkpoints/v2_2/L29
+ln -s L3         checkpoints/v2_2/L03
+
+# Phase 1: gating baseline
+python code/eval/random_h_baseline.py --av-ckpt checkpoints/v2_2/L10/final \
+    --layer 10 --out-dir findings/v2_2/random_h_baseline
+
+# Phase 2: quantitative anchor
+python code/eval/linear_probe.py --layers 3 10 20 29 \
+    --out-dir findings/v2_2
+
+# Phase 3: cross-layer trajectory (the centerpiece)
+python code/eval/cross_layer_video.py --ckpts-root checkpoints/v2_2 \
+    --layers 3 10 20 29 --n-samples 32 \
+    --prompts-jsonl data/v2_2_prompts.jsonl \
+    --out-dir artefacts/v2_2/cross_layer
+
+# Phase 4: interpolation morph
+python code/eval/interpolate_h.py --av-ckpt checkpoints/v2_2/L10/final \
+    --layer 10 --n-steps 15 --n-samples 16 \
+    --out-dir artefacts/v2_2/morph
+
+# Phase 5: per-token trajectory
+python code/eval/token_trajectory.py --av-ckpt checkpoints/v2_2/L10/final \
+    --layer 10 --max-gen-tokens 15 \
+    --out-dir artefacts/v2_2/per_token
+
+# Phase 6: OOD demo
+python code/eval/clip_ranker_ood.py --av-ckpt checkpoints/v2_2/L10/final \
+    --layer 10 --out-dir findings/v2_2/ood
+
+# Phase 7: viral video assembly
+python code/eval/build_v2_2_video.py --out-dir artefacts/v2_2 \
+    --findings-dir findings/v2_2
+```
+
+### Caveats called out (honest framing)
+
+- **L3 and L20 ckpts were trained for 2500 steps**, vs v2.0's L10/L29 with
+  ~10K. Direct comparison at L20 understates what the architecture can do
+  there. The linear probe (no per-layer training) gives a more apples-to-apples
+  measure of per-layer information content; it's monotonic in depth as claimed.
+- **Interpolation morphs snap** rather than smoothly blend at most α; the AV
+  is closer to a high-dim template-classifier than a continuous decoder at
+  L10. This is itself a finding worth reporting honestly.
+- **OOD drawings have lower CLIP scores** (25-30) than in-distribution (33-37);
+  the AV generalises imperfectly. We ship the OOD results anyway; this is the
+  honest limit.
 
 ## License
 

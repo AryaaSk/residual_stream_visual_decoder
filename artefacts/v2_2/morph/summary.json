@@ -1,0 +1,516 @@
+{
+  "layer": 10,
+  "n_steps": 15,
+  "pairs": [
+    {
+      "tag": "cat_to_elephant",
+      "prompt_a": "I am thinking about a cat.",
+      "prompt_b": "I am thinking about an elephant.",
+      "clip_a": "a drawing of a cat",
+      "clip_b": "a drawing of an elephant",
+      "per_step": [
+        {
+          "alpha": 0.0,
+          "n_strokes": 79,
+          "score_a": 34.25,
+          "score_b": 25.83
+        },
+        {
+          "alpha": 0.07142857142857142,
+          "n_strokes": 79,
+          "score_a": 28.96,
+          "score_b": 35.35
+        },
+        {
+          "alpha": 0.14285714285714285,
+          "n_strokes": 74,
+          "score_a": 26.56,
+          "score_b": 36.2
+        },
+        {
+          "alpha": 0.21428571428571427,
+          "n_strokes": 62,
+          "score_a": 28.0,
+          "score_b": 36.49
+        },
+        {
+          "alpha": 0.2857142857142857,
+          "n_strokes": 62,
+          "score_a": 28.42,
+          "score_b": 36.73
+        },
+        {
+          "alpha": 0.3571428571428571,
+          "n_strokes": 62,
+          "score_a": 28.42,
+          "score_b": 36.73
+        },
+        {
+          "alpha": 0.42857142857142855,
+          "n_strokes": 62,
+          "score_a": 28.42,
+          "score_b": 36.73
+        },
+        {
+          "alpha": 0.5,
+          "n_strokes": 63,
+          "score_a": 28.47,
+          "score_b": 36.64
+        },
+        {
+          "alpha": 0.5714285714285714,
+          "n_strokes": 62,
+          "score_a": 28.42,
+          "score_b": 36.73
+        },
+        {
+          "alpha": 0.6428571428571428,
+          "n_strokes": 62,
+          "score_a": 28.42,
+          "score_b": 36.73
+        },
+        {
+          "alpha": 0.7142857142857142,
+          "n_strokes": 62,
+          "score_a": 28.42,
+          "score_b": 36.73
+        },
+        {
+          "alpha": 0.7857142857142857,
+          "n_strokes": 62,
+          "score_a": 28.42,
+          "score_b": 36.73
+        },
+        {
+          "alpha": 0.8571428571428571,
+          "n_strokes": 62,
+          "score_a": 28.42,
+          "score_b": 36.73
+        },
+        {
+          "alpha": 0.9285714285714285,
+          "n_strokes": 62,
+          "score_a": 28.42,
+          "score_b": 36.73
+        },
+        {
+          "alpha": 1.0,
+          "n_strokes": 62,
+          "score_a": 28.42,
+          "score_b": 36.73
+        }
+      ],
+      "max_stepwise_delta": 14.810000000000002,
+      "is_smooth": false,
+      "wallclock_s": 128.4515664577484
+    },
+    {
+      "tag": "dog_to_horse",
+      "prompt_a": "I am thinking about a dog.",
+      "prompt_b": "I am thinking about a horse.",
+      "clip_a": "a drawing of a dog",
+      "clip_b": "a drawing of a horse",
+      "per_step": [
+        {
+          "alpha": 0.0,
+          "n_strokes": 61,
+          "score_a": 34.92,
+          "score_b": 32.68
+        },
+        {
+          "alpha": 0.07142857142857142,
+          "n_strokes": 61,
+          "score_a": 34.92,
+          "score_b": 32.68
+        },
+        {
+          "alpha": 0.14285714285714285,
+          "n_strokes": 61,
+          "score_a": 34.92,
+          "score_b": 32.68
+        },
+        {
+          "alpha": 0.21428571428571427,
+          "n_strokes": 61,
+          "score_a": 34.92,
+          "score_b": 32.68
+        },
+        {
+          "alpha": 0.2857142857142857,
+          "n_strokes": 61,
+          "score_a": 34.92,
+          "score_b": 32.68
+        },
+        {
+          "alpha": 0.3571428571428571,
+          "n_strokes": 61,
+          "score_a": 34.92,
+          "score_b": 32.68
+        },
+        {
+          "alpha": 0.42857142857142855,
+          "n_strokes": 61,
+          "score_a": 34.92,
+          "score_b": 32.68
+        },
+        {
+          "alpha": 0.5,
+          "n_strokes": 61,
+          "score_a": 34.92,
+          "score_b": 32.68
+        },
+        {
+          "alpha": 0.5714285714285714,
+          "n_strokes": 61,
+          "score_a": 34.92,
+          "score_b": 32.68
+        },
+        {
+          "alpha": 0.6428571428571428,
+          "n_strokes": 61,
+          "score_a": 34.92,
+          "score_b": 32.68
+        },
+        {
+          "alpha": 0.7142857142857142,
+          "n_strokes": 55,
+          "score_a": 34.0,
+          "score_b": 36.61
+        },
+        {
+          "alpha": 0.7857142857142857,
+          "n_strokes": 74,
+          "score_a": 32.07,
+          "score_b": 36.22
+        },
+        {
+          "alpha": 0.8571428571428571,
+          "n_strokes": 74,
+          "score_a": 32.07,
+          "score_b": 36.22
+        },
+        {
+          "alpha": 0.9285714285714285,
+          "n_strokes": 55,
+          "score_a": 34.0,
+          "score_b": 36.61
+        },
+        {
+          "alpha": 1.0,
+          "n_strokes": 55,
+          "score_a": 34.0,
+          "score_b": 36.61
+        }
+      ],
+      "max_stepwise_delta": 4.850000000000001,
+      "is_smooth": false,
+      "wallclock_s": 110.59877943992615
+    },
+    {
+      "tag": "fish_to_bird",
+      "prompt_a": "Imagine a fish.",
+      "prompt_b": "I am picturing a bird flying across the sky.",
+      "clip_a": "a drawing of a fish",
+      "clip_b": "a drawing of a bird",
+      "per_step": [
+        {
+          "alpha": 0.0,
+          "n_strokes": 45,
+          "score_a": 34.99,
+          "score_b": 26.5
+        },
+        {
+          "alpha": 0.07142857142857142,
+          "n_strokes": 45,
+          "score_a": 34.99,
+          "score_b": 26.5
+        },
+        {
+          "alpha": 0.14285714285714285,
+          "n_strokes": 45,
+          "score_a": 34.99,
+          "score_b": 26.5
+        },
+        {
+          "alpha": 0.21428571428571427,
+          "n_strokes": 45,
+          "score_a": 34.99,
+          "score_b": 26.5
+        },
+        {
+          "alpha": 0.2857142857142857,
+          "n_strokes": 45,
+          "score_a": 34.99,
+          "score_b": 26.5
+        },
+        {
+          "alpha": 0.3571428571428571,
+          "n_strokes": 45,
+          "score_a": 34.99,
+          "score_b": 26.5
+        },
+        {
+          "alpha": 0.42857142857142855,
+          "n_strokes": 45,
+          "score_a": 34.99,
+          "score_b": 26.5
+        },
+        {
+          "alpha": 0.5,
+          "n_strokes": 45,
+          "score_a": 34.99,
+          "score_b": 26.5
+        },
+        {
+          "alpha": 0.5714285714285714,
+          "n_strokes": 28,
+          "score_a": 34.9,
+          "score_b": 27.83
+        },
+        {
+          "alpha": 0.6428571428571428,
+          "n_strokes": 59,
+          "score_a": 27.0,
+          "score_b": 34.68
+        },
+        {
+          "alpha": 0.7142857142857142,
+          "n_strokes": 59,
+          "score_a": 27.0,
+          "score_b": 34.68
+        },
+        {
+          "alpha": 0.7857142857142857,
+          "n_strokes": 59,
+          "score_a": 27.0,
+          "score_b": 34.68
+        },
+        {
+          "alpha": 0.8571428571428571,
+          "n_strokes": 59,
+          "score_a": 27.0,
+          "score_b": 34.68
+        },
+        {
+          "alpha": 0.9285714285714285,
+          "n_strokes": 59,
+          "score_a": 27.0,
+          "score_b": 34.68
+        },
+        {
+          "alpha": 1.0,
+          "n_strokes": 47,
+          "score_a": 26.97,
+          "score_b": 33.96
+        }
+      ],
+      "max_stepwise_delta": 14.75,
+      "is_smooth": false,
+      "wallclock_s": 95.1748378276825
+    },
+    {
+      "tag": "sun_to_cloud",
+      "prompt_a": "The sun is shining.",
+      "prompt_b": "I am picturing a cloud in the sky.",
+      "clip_a": "a drawing of a sun",
+      "clip_b": "a drawing of a cloud",
+      "per_step": [
+        {
+          "alpha": 0.0,
+          "n_strokes": 71,
+          "score_a": 36.24,
+          "score_b": 27.68
+        },
+        {
+          "alpha": 0.07142857142857142,
+          "n_strokes": 71,
+          "score_a": 36.24,
+          "score_b": 27.68
+        },
+        {
+          "alpha": 0.14285714285714285,
+          "n_strokes": 58,
+          "score_a": 35.99,
+          "score_b": 28.15
+        },
+        {
+          "alpha": 0.21428571428571427,
+          "n_strokes": 71,
+          "score_a": 36.24,
+          "score_b": 27.68
+        },
+        {
+          "alpha": 0.2857142857142857,
+          "n_strokes": 71,
+          "score_a": 36.24,
+          "score_b": 27.68
+        },
+        {
+          "alpha": 0.3571428571428571,
+          "n_strokes": 71,
+          "score_a": 36.24,
+          "score_b": 27.68
+        },
+        {
+          "alpha": 0.42857142857142855,
+          "n_strokes": 58,
+          "score_a": 35.99,
+          "score_b": 28.15
+        },
+        {
+          "alpha": 0.5,
+          "n_strokes": 42,
+          "score_a": 34.88,
+          "score_b": 28.05
+        },
+        {
+          "alpha": 0.5714285714285714,
+          "n_strokes": 58,
+          "score_a": 35.99,
+          "score_b": 28.15
+        },
+        {
+          "alpha": 0.6428571428571428,
+          "n_strokes": 58,
+          "score_a": 35.99,
+          "score_b": 28.15
+        },
+        {
+          "alpha": 0.7142857142857142,
+          "n_strokes": 42,
+          "score_a": 34.88,
+          "score_b": 28.05
+        },
+        {
+          "alpha": 0.7857142857142857,
+          "n_strokes": 42,
+          "score_a": 34.88,
+          "score_b": 28.05
+        },
+        {
+          "alpha": 0.8571428571428571,
+          "n_strokes": 67,
+          "score_a": 28.93,
+          "score_b": 28.08
+        },
+        {
+          "alpha": 0.9285714285714285,
+          "n_strokes": 67,
+          "score_a": 28.93,
+          "score_b": 28.08
+        },
+        {
+          "alpha": 1.0,
+          "n_strokes": 67,
+          "score_a": 28.93,
+          "score_b": 28.08
+        }
+      ],
+      "max_stepwise_delta": 5.98,
+      "is_smooth": false,
+      "wallclock_s": 114.03045678138733
+    },
+    {
+      "tag": "apple_to_pizza",
+      "prompt_a": "I am thinking about an apple.",
+      "prompt_b": "I am thinking about a pizza.",
+      "clip_a": "a drawing of an apple",
+      "clip_b": "a drawing of a pizza",
+      "per_step": [
+        {
+          "alpha": 0.0,
+          "n_strokes": 45,
+          "score_a": 37.28,
+          "score_b": 27.17
+        },
+        {
+          "alpha": 0.07142857142857142,
+          "n_strokes": 45,
+          "score_a": 37.28,
+          "score_b": 27.17
+        },
+        {
+          "alpha": 0.14285714285714285,
+          "n_strokes": 45,
+          "score_a": 37.28,
+          "score_b": 27.17
+        },
+        {
+          "alpha": 0.21428571428571427,
+          "n_strokes": 45,
+          "score_a": 37.28,
+          "score_b": 27.17
+        },
+        {
+          "alpha": 0.2857142857142857,
+          "n_strokes": 45,
+          "score_a": 37.28,
+          "score_b": 27.17
+        },
+        {
+          "alpha": 0.3571428571428571,
+          "n_strokes": 45,
+          "score_a": 37.28,
+          "score_b": 27.17
+        },
+        {
+          "alpha": 0.42857142857142855,
+          "n_strokes": 32,
+          "score_a": 36.81,
+          "score_b": 26.87
+        },
+        {
+          "alpha": 0.5,
+          "n_strokes": 32,
+          "score_a": 36.81,
+          "score_b": 26.87
+        },
+        {
+          "alpha": 0.5714285714285714,
+          "n_strokes": 79,
+          "score_a": 26.56,
+          "score_b": 34.82
+        },
+        {
+          "alpha": 0.6428571428571428,
+          "n_strokes": 75,
+          "score_a": 24.75,
+          "score_b": 35.44
+        },
+        {
+          "alpha": 0.7142857142857142,
+          "n_strokes": 79,
+          "score_a": 26.56,
+          "score_b": 34.82
+        },
+        {
+          "alpha": 0.7857142857142857,
+          "n_strokes": 75,
+          "score_a": 24.75,
+          "score_b": 35.44
+        },
+        {
+          "alpha": 0.8571428571428571,
+          "n_strokes": 75,
+          "score_a": 24.75,
+          "score_b": 35.44
+        },
+        {
+          "alpha": 0.9285714285714285,
+          "n_strokes": 75,
+          "score_a": 24.75,
+          "score_b": 35.44
+        },
+        {
+          "alpha": 1.0,
+          "n_strokes": 75,
+          "score_a": 24.75,
+          "score_b": 35.44
+        }
+      ],
+      "max_stepwise_delta": 18.200000000000003,
+      "is_smooth": false,
+      "wallclock_s": 112.74893879890442
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+[
+  {
+    "slug": "eiffel_tower",
+    "prompt": "The Eiffel Tower in Paris.",
+    "clip_text": "the Eiffel Tower",
+    "best_clip": 24.827970504760742,
+    "n_strokes": 35
+  },
+  {
+    "slug": "capital_paris",
+    "prompt": "The capital of France is Paris.",
+    "clip_text": "the city of Paris",
+    "best_clip": 21.614891052246094,
+    "n_strokes": 34
+  },
+  {
+    "slug": "thunderstorm",
+    "prompt": "A thunderstorm with lightning hit the village.",
+    "clip_text": "a thunderstorm",
+    "best_clip": 25.686450958251953,
+    "n_strokes": 36
+  },
+  {
+    "slug": "smile_face",
+    "prompt": "I am picturing a smiling face.",
+    "clip_text": "a smiling face",
+    "best_clip": 24.550209045410156,
+    "n_strokes": 34
+  },
+  {
+    "slug": "triangle",
+    "prompt": "Imagine a triangle inscribed in a circle.",
+    "clip_text": "a triangle",
+    "best_clip": 29.3935604095459,
+    "n_strokes": 47
+  },
+  {
+    "slug": "circle",
+    "prompt": "I am picturing a circle.",
+    "clip_text": "a circle",
+    "best_clip": 24.989721298217773,
+    "n_strokes": 57
+  },
+  {
+    "slug": "rainbow",
+    "prompt": "A rainbow after the rain.",
+    "clip_text": "a rainbow",
+    "best_clip": 23.62566566467285,
+    "n_strokes": 38
+  },
+  {
+    "slug": "hand",
+    "prompt": "I am picturing a human hand.",
+    "clip_text": "a hand",
+    "best_clip": 24.939453125,
+    "n_strokes": 44
+  },
+  {
+    "slug": "face",
+    "prompt": "Imagine the face of an old man.",
+    "clip_text": "a face",
+    "best_clip": 23.007366180419922,
+    "n_strokes": 75
+  },
+  {
+    "slug": "eye",
+    "prompt": "An eye looking up at the sky.",
+    "clip_text": "an eye",
+    "best_clip": 25.615495681762695,
+    "n_strokes": 34
+  },
+  {
+    "slug": "book",
+    "prompt": "An open book on a desk.",
+    "clip_text": "a book",
+    "best_clip": 29.173547744750977,
+    "n_strokes": 76
+  },
+  {
+    "slug": "bicycle",
+    "prompt": "I am picturing a bicycle.",
+    "clip_text": "a bicycle",
+    "best_clip": 34.112003326416016,
+    "n_strokes": 67
+  }
+]

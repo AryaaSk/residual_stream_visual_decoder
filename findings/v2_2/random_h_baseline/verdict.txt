@@ -1,0 +1,10 @@
+REAL h mean best-CLIP: 35.89
+RANDOM-MATCHED h mean best-CLIP: 35.62
+RANDOM-ISO h mean best-CLIP: 34.68
+Gap (real - matched): +0.27
+
+Real-control concept histogram: {'apple': 1, 'dog': 1, 'fish': 1, 'pizza': 1, 'horse': 2, 'elephant': 1, 'flower': 1, 'tree': 1, 'mountain': 3, 'sun': 1, 'star': 1, 'car': 1, 'airplane': 1}
+Random-matched concept histogram: {'airplane': 3, 'dog': 4, 'elephant': 3, 'bird': 3, 'mountain': 1, 'cactus': 1, 'pizza': 1}
+Random-iso concept histogram: {'mountain': 4, 'elephant': 1, 'horse': 1, 'cloud': 6, 'sun': 1, 'apple': 2, 'fish': 1}
+
+VERDICT: AV largely ignores h (gap <= 0.5). RE-PLAN v2.2 framing.
