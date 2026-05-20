@@ -1,0 +1,102 @@
+[
+  {
+    "slug": "airplane",
+    "score": 36.981178283691406,
+    "from": "clip_L29_step005000"
+  },
+  {
+    "slug": "apple",
+    "score": 37.28472137451172,
+    "from": "clip_L10_step005000"
+  },
+  {
+    "slug": "bird",
+    "score": 34.6762580871582,
+    "from": "clip_L10_step005000"
+  },
+  {
+    "slug": "cactus",
+    "score": 31.132394790649414,
+    "from": "clip_L29_step005000"
+  },
+  {
+    "slug": "car",
+    "score": 36.55142593383789,
+    "from": "clip_L10_step005000"
+  },
+  {
+    "slug": "cat",
+    "score": 34.2751579284668,
+    "from": "clip_L10_step005000"
+  },
+  {
+    "slug": "clock",
+    "score": 34.10324478149414,
+    "from": "clip_L10_step005000"
+  },
+  {
+    "slug": "cloud",
+    "score": 36.472530364990234,
+    "from": "clip_L29_step005000"
+  },
+  {
+    "slug": "dog",
+    "score": 35.131446838378906,
+    "from": "clip_L10_step005000"
+  },
+  {
+    "slug": "elephant",
+    "score": 36.85392761230469,
+    "from": "clip_L10_step005000"
+  },
+  {
+    "slug": "fish",
+    "score": 35.049354553222656,
+    "from": "clip_L29_step005000"
+  },
+  {
+    "slug": "flower",
+    "score": 35.68099594116211,
+    "from": "clip_L10_step005000"
+  },
+  {
+    "slug": "horse",
+    "score": 36.6077995300293,
+    "from": "clip_L10_step005000"
+  },
+  {
+    "slug": "house",
+    "score": 35.489261627197266,
+    "from": "clip_L29_step005000"
+  },
+  {
+    "slug": "mountain",
+    "score": 37.778526306152344,
+    "from": "clip_L10_step005000"
+  },
+  {
+    "slug": "pizza",
+    "score": 34.92133712768555,
+    "from": "clip_L29_step005000"
+  },
+  {
+    "slug": "star",
+    "score": 35.888004302978516,
+    "from": "clip_L10_step005000"
+  },
+  {
+    "slug": "sun",
+    "score": 36.235164642333984,
+    "from": "clip_L10_step002500"
+  },
+  {
+    "slug": "tree",
+    "score": 35.915199279785156,
+    "from": "clip_L10_step002500"
+  },
+  {
+    "slug": "umbrella",
+    "score": 39.16427993774414,
+    "from": "clip_L10_step005000"
+  }
+]
