@@ -197,4 +197,126 @@ python -m code.eval.clip_ranker --av-ckpt checkpoints/my_run/L12/final --layer 1
   --out-dir findings/my_run/clip
 ```
 
-Compute used: 2× H200, ~32 GPU-hours across all versions.
+Compute used through v1.5: 2× H200, ~32 GPU-hours.
+
+---
+
+## v2.0 — Port to Qwen 3.5-4B (truly unified vision+text stream)
+
+v1.5 shipped with the *recipe* working — cat with face, sun with rays, fish with tail — but two architectural compromises were openly acknowledged:
+
+1. **44-concept ceiling.** Stage 1.5 supervised SFT was on 44 QuickDraw categories. Any prompt outside that set decoded to noise. We could expand QuickDraw categories but never solve the underlying "model can only draw what we showed it real drawings of" problem.
+2. **Reward gameability.** v1.0/v1.1's "AR reads drawing, predicts h, reward = reconstruction" failed because AR was co-trained with AV — they evolved together to make abstract scribbles AR-decodable, gaming the reward signal. We patched around it with **CLIP-ranked best-of-N at inference** and **canonical-drawing distillation at training**, both of which worked but weren't the principled fix.
+
+The principled fix was always **"use the target model itself as the frozen AR"** — feed the AV's drawing back through the same model that produced the target activation, see if the activation matches. Anthropic's NLA does this for text (feed AV's text back through the original model, read h at the same layer). For visual, you'd feed the rendered image back. The architectural blocker was that Gemma 4's vision tower and text path produce activations in distributionally-different distributions at the same layer — same coordinate frame, but vision goes `image → vision_tower → embed_vision.embedding_projection → language_layers[0]` while text goes `text → embed_tokens → language_layers[0]`. Same destination, different upstream. Comparing them requires engineering around the pathway mismatch.
+
+### Why Qwen 3.5-4B
+
+Released March 2026 by Alibaba. The 4B variant is a **native unified-stream multimodal model** — vision tokens and text tokens go through the *same* `embed_tokens` lookup, share the same residual stream, get processed by the same attention from step 1 of layer 0 onwards. No vision tower. No separate projection. Feed an image; it's just tokens. Feed text; same shape, same lookup, same path.
+
+This is the architectural premise that lets the principled "frozen-AR-via-target-model" reward actually work.
+
+### What we found when we ported
+
+Three real architectural surprises required code changes beyond the model_id swap:
+
+**Hybrid attention architecture.** Qwen 3.5-4B has 32 transformer layers — 24 use **Gated DeltaNet** (linear-attention variant, modules named `linear_attn.in_proj_qkv`, `out_proj`, etc.) and 8 use **standard self-attention** (modules named `self_attn.q_proj`, `k_proj`, `v_proj`, `o_proj`). Our v1.x LoRA walker matched ZERO modules on Qwen because it was hardcoded for `q_proj/k_proj/v_proj/o_proj` only — 24 of the 32 layers don't have those. Fixed by expanding LoRA target names to cover both attention styles plus MLP projections.
+
+**No `language_model` namespace.** Gemma 4 nests language layers under `language_model.layers.{i}.`; the LoRA walker used that substring to classify modules as "language-kind" eligible for LoRA. Qwen 3.5 puts language layers at `model.layers.{i}.` with no `language_model` wrapper because it IS the language model from the start. Walker generalised to treat any `.layers.<int>.` path as language by default.
+
+**Embedding padding off-by-some.** Qwen's pre-trained embedding table is padded to a multiple of 128 (248320 padded vs 248077 unpadded tokenizer). Our vocab_extend code compared `embed.weight.shape[0]` (padded) to `len(tokenizer)` after add_tokens, making it LOOK like only ~19 of our 262 stroke tokens got added. They were all added correctly — the comparison was misleading. Cosmetic, but spent 20 minutes confused.
+
+After those three fixes (plus the trivial model_id default updates across 26 files), v2.0 Stage 1.5 SFT runs cleanly.
+
+### The activation-geometry probe on Qwen
+
+Replicated the v0.1 pair-cosine analysis on Qwen. Across 30 diverse prompts, last-token activation at every other layer:
+
+| layer | pair-cosine | notes |
+|---|---|---|
+| L00 | 0.917 | embedding output, mostly token-positional |
+| L04 | 0.709 | early features, vision/text differentiation forming |
+| L08 | 0.596 | **lowest mid-band**: discriminative sweet spot |
+| L10 | 0.606 | mid-stack, our pick |
+| L12 | 0.620 | |
+| L18 | 0.633 | |
+| L24 | 0.597 | second-lowest, late-mid stack |
+| L29 | 0.657 | late, more semantic-clustered |
+| L32 | 0.665 | final layer, most clustered |
+
+L_primary = L10 (mid-band winner). L_late = L29 (analogue of Gemma's L24 for cross-layer trajectory). v2.0 trained both in parallel on the same 2× H200 budget.
+
+### What v2.0 ships
+
+Stage 1.5 SFT on top-5 canonical drawings (220 examples), 24-layer LoRA (20.94M LoRA params, ~4× v1.5's 5M), cosine LR decay, ~2.5K steps to convergence. CLIP-ranked best-of-32 at inference (same recipe v1.5 used; CLIP is the right oracle).
+
+Step 2500 outputs:
+
+- **Cat** with whiskers (three per side), pointed ears, round face — looks like a Hello-Kitty / QuickDraw cat.
+- **Dog** as a full quadruped silhouette, body and legs visible.
+- **Fish** with clean fish-body + tail fin.
+- **Flower** with five distinct petals and a stem.
+- **Cactus** with two arms.
+- **Mountain** with multiple peaks side by side.
+- **Elephant** with trunk, body, four legs.
+- **Horse** with mane, body, four legs, tail.
+- **Sun** with 8+ rays around a central disc.
+- **Tree** with leafy crown and trunk.
+- **Cloud** with internal texture marks.
+- **Pizza slice with toppings.**
+
+Side-by-side with v1.5 (`artefacts/v2_0/before_after_v1_5_vs_v2_0.png`): every concept is qualitatively better. v1.5's "cat" was a closed body shape; v2.0's cat is a face with ears, whiskers, and the body in proportion. v1.5's "elephant" was a heavy blob; v2.0's is recognisable as an elephant. v1.5 was the version where the architecture worked; **v2.0 is the version where it sings.**
+
+### Why this happened so much faster than v1.5
+
+v2.0 Stage 1.5 converged from loss 17.8 to 0.02 in 2.5K steps. v1.5 needed 5K steps to get to the same loss. Why? Three things:
+
+1. **Bigger trainable surface.** 24-layer LoRA on Qwen's larger hidden size (2560 vs 1536) = 20.94M LoRA params vs v1.5's 5M. More capacity, less time to converge.
+2. **Unified pathway.** Vision and text being in the same coordinate frame from step 1 means the projector + LoRA bridge has less translation to learn — there isn't a Gemma-style "vision-tower-to-language-residual-stream" gap to model.
+3. **Resumes nothing.** v2.0 trained from a fresh Qwen base, not from v1.5 ckpts. No warm-start, no co-adaptation; just clean SFT on a strong unified base.
+
+### What v2.0 does NOT include (yet)
+
+Stage 2 Qwen-self-consistency REINFORCE — the **principled fix to the reward-gameability problem** — was implemented (`code/train/stage2_qwen_consistency.py`) but not yet run as part of the v2.0 release. The 5-hour budget was spent on the architectural port, the LoRA generalisation, the smoke test debugging (Gated DeltaNet module-name mismatch took us by surprise), Stage 1.5 SFT on both layers, and shipping. REINFORCE training is the v2.1 deliverable.
+
+Stage 2 design (recap, for v2.1):
+```
+for prompt P in any text:
+  h_text = Qwen(P)[L][last]                       # frozen target
+  drawings = AV.sample(h_text, n=G)
+  for d in drawings:
+      image = render(d)
+      h_image_then_text = Qwen(image + P)[L][last]
+      reward[d] = cosine(h_text, h_image_then_text)
+                  - min_stroke_penalty(d)
+                  + 0.1 * CLIP(image, P)
+  advantage[d] = (reward - mean) / std
+  REINFORCE on AV(projector + LoRA + new-vocab rows)
+  + KL anchor to v2.0 SFT init
+```
+
+Qwen is frozen end-to-end. Cannot be co-evolved. Generalises to arbitrary prompts (no 44-concept ceiling, no QuickDraw dependency).
+
+### The interpretability question
+
+A user pushed back during the conversation: "if we use CLIP as the reward, aren't we just training a text-to-image model that happens to have h as input? The layer choice becomes a hyperparameter, not a target of investigation."
+
+Correct critique. CLIP-REINFORCE *would* drift toward "draw whatever matches the prompt" with h as a lossy conditioning channel. The user's insight forced the design back to **frozen-Qwen-as-AR** (cross-modal consistency check on the same model at the same layer), which IS interpretability-faithful — the drawing has to be such that the original model, when shown it, ends up thinking the same thing at that specific layer. The layer becomes the experiment, not a knob.
+
+### Architectural lessons
+
+- **Stop training the AR.** Co-evolution of AR + AV is a reward-hacking trap. If the AR has to exist at all, it must be frozen (target model itself, or a pretrained cross-modal scorer like CLIP).
+- **Use the target model as the AR when you can.** This is canonical NLA. Visual-NLA on Gemma made it awkward (vision-tower modality split); visual-NLA on Qwen 3.5 makes it trivial (unified stream).
+- **Architecture surprises happen on novel bases.** Gated DeltaNet's module naming convention broke our LoRA walker silently. Hybrid architectures need explicit testing of "did LoRA actually attach to anything?" gates.
+- **Loss measures the data distribution, not the model.** v1.x plateau at 1.9 was the entropy of "200 different cat drawings." Canonical-distillation (v1.4) was the lever, not more training. Stayed true on v2.0 — same trick gets ~2K steps to memorise on a more capable base.
+
+### Compute used
+
+v2.0 added ~2 GPU-hours (Phase 0 sanity + Phase 1 port + Phase 2 SFT × 2 layers in parallel + CLIP autoeval). Total project compute through v2.0: ~34 GPU-hours on 2× H200.
+
+### v2.1 roadmap
+
+- Stage 2 REINFORCE actually run (the prepared trainer at `code/train/stage2_qwen_consistency.py`).
+- Broader prompt set — push the model on prompts where there ARE no QuickDraw drawings (`"the Eiffel Tower"`, `"thunderstorm"`, `"loneliness"`, `"the capital of France"`).
+- Cross-layer trajectory video using L10 and L29 (early-features vs late-semantic).
+- Architectural variant: Chameleon-7B as base, with native image-token generation (skipping the stroke tokenization entirely). The cleanest version of the project's vision — same model generates images natively, AV doesn't need a separate vocab at all.

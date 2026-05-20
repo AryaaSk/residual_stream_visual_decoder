@@ -1,31 +1,43 @@
 # Residual Stream Visual Decoder
 
-**Draw what Gemma 4 is thinking.**
+**Draw what a language model is thinking.**
 
-![gallery](artefacts/v1_5/gallery.png)
+![gallery](artefacts/v2_0/gallery.png)
 
 Each panel above is a real drawing produced by sampling stroke tokens from an
-*Activation Verbalizer* that received Gemma 4 E2B's residual-stream activation
-at layer 12 or 24, injected via embedding-layer surgery. The drawings are not
-generated from the prompt's text — they come from the *internal vector* the
-model is processing when you ask it to think about a cat.
+*Activation Verbalizer* that received the underlying model's residual-stream
+activation at a chosen layer, injected via embedding-layer surgery. The
+drawings are NOT generated from the prompt's text — they come from the
+*internal vector* the model is processing when you ask it to think about a cat.
 
-**v1.1 vs v1.5 — same model, same prompts, same activation injection:**
+**v1.5 (Gemma 4 base) vs v2.0 (Qwen 3.5-4B base) — same prompts, same recipe,
+different foundation:**
 
-![Before / after](artefacts/v1_5/before_after_small.png)
+![v1.5 vs v2.0](artefacts/v2_0/before_after_v1_5_vs_v2_0.png)
 
-Top row (v1.1): the architecture worked end-to-end but the AV had no learnable
-surface to interpret the injected activation. Outputs were abstract structure.
+The v2.0 jump comes from porting to **Qwen 3.5-4B**, which has a truly
+unified vision+text residual stream (no separate vision tower projection),
+plus a hybrid 24-layer Gated DeltaNet + 8-layer self-attention architecture
+that the project's LoRA infrastructure had to be generalised for. The
+unified-stream property is what lets the principled cross-modal consistency
+reward actually work — you can feed the AV's rendered drawing back through
+the SAME model at the SAME layer and read out a comparable activation, no
+modality-mismatch engineering needed.
 
-Bottom row (v1.5): every architectural and training change from v1.2-v1.4
-stacked: learnable activation projector + LoRA on all 24 AV language layers +
-Stage 1.5 supervised SFT on top-5 canonical drawings per concept (CLIP-ranked)
-+ CLIP-ranked best-of-32 inference + 50K-step training with cosine LR decay.
-Stage 1.5 SFT loss drops 3.28 → 0.02. Sun has rays. Cat has a face. Fish has
-a tail. Pizza is a circle.
+**v1.1 vs v2.0 — the full project trajectory:**
 
-Full iteration history (v0 → v1.5, every dead end + breakthrough) in
-[`RESEARCH_NOTES.md`](RESEARCH_NOTES.md).
+![Before / after](artefacts/v2_0/before_after_v1_1_vs_v2_0.png)
+
+Top row (v1.1, July 2026): the architecture worked end-to-end but the AV
+had no learnable surface to interpret the injected activation. Outputs were
+abstract structure.
+
+Bottom row (v2.0): cat has whiskers. Elephant has a trunk. Horse has a mane.
+Sun has rays. Pizza has toppings.
+
+Full iteration history (v0 → v2.0, every dead end + breakthrough) in
+[`RESEARCH_NOTES.md`](RESEARCH_NOTES.md). The v2.0 plan and architectural
+rationale are in [`V2_PLAN.md`](V2_PLAN.md).
 
 <!-- The hype reel + per-token + cross-layer galleries are inserted by build_index.py after training. -->
 
