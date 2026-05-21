@@ -1,0 +1,62 @@
+[
+  {
+    "slug": "cat",
+    "logp": -4.013345718383789,
+    "n_strokes": 62
+  },
+  {
+    "slug": "dog",
+    "logp": -3.9048168659210205,
+    "n_strokes": 79
+  },
+  {
+    "slug": "elephant",
+    "logp": -9.436101913452148,
+    "n_strokes": 79
+  },
+  {
+    "slug": "fish",
+    "logp": -0.3279363512992859,
+    "n_strokes": 33
+  },
+  {
+    "slug": "horse",
+    "logp": -4.166801452636719,
+    "n_strokes": 70
+  },
+  {
+    "slug": "flower",
+    "logp": -4.808128356933594,
+    "n_strokes": 56
+  },
+  {
+    "slug": "sun",
+    "logp": -5.833973407745361,
+    "n_strokes": 79
+  },
+  {
+    "slug": "tree",
+    "logp": -5.325960636138916,
+    "n_strokes": 43
+  },
+  {
+    "slug": "airplane",
+    "logp": -8.905681610107422,
+    "n_strokes": 39
+  },
+  {
+    "slug": "car",
+    "logp": -2.3565139770507812,
+    "n_strokes": 79
+  },
+  {
+    "slug": "bird",
+    "logp": -2.611262559890747,
+    "n_strokes": 68
+  },
+  {
+    "slug": "mountain",
+    "logp": -3.326061248779297,
+    "n_strokes": 38
+  }
+]

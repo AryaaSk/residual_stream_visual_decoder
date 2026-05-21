@@ -1,0 +1,145 @@
+[
+  {
+    "layer": 0,
+    "n_concepts": 30,
+    "diag_mean": 1.0000007152557373,
+    "diag_std": 2.384185791015625e-07,
+    "off_diag_mean": 1.0000005960464478,
+    "discriminability_mean": 1.1920928955078125e-07,
+    "discriminability_per_concept": 1.1920928955078125e-07,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 3,
+    "n_concepts": 30,
+    "diag_mean": 0.6274464726448059,
+    "diag_std": 0.0040787761099636555,
+    "off_diag_mean": 0.6274464726448059,
+    "discriminability_mean": 1.9868215961338365e-09,
+    "discriminability_per_concept": 1.9868215961338365e-09,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 5,
+    "n_concepts": 30,
+    "diag_mean": 0.5332812666893005,
+    "diag_std": 0.004338495898991823,
+    "off_diag_mean": 0.5332812666893005,
+    "discriminability_mean": 5.9604645663569045e-09,
+    "discriminability_per_concept": 5.9604645663569045e-09,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 8,
+    "n_concepts": 30,
+    "diag_mean": 0.5006693601608276,
+    "diag_std": 0.030502406880259514,
+    "off_diag_mean": 0.5006693601608276,
+    "discriminability_mean": 1.4901161193847656e-08,
+    "discriminability_per_concept": 1.4901161193847656e-08,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 10,
+    "n_concepts": 30,
+    "diag_mean": 0.5356276035308838,
+    "diag_std": 0.029850857332348824,
+    "off_diag_mean": 0.5356276035308838,
+    "discriminability_mean": -1.2914339819758425e-08,
+    "discriminability_per_concept": -1.2914339819758425e-08,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 12,
+    "n_concepts": 30,
+    "diag_mean": 0.5283210873603821,
+    "diag_std": 0.023078368976712227,
+    "off_diag_mean": 0.5283210873603821,
+    "discriminability_mean": 2.9802322831784522e-09,
+    "discriminability_per_concept": 2.9802322831784522e-09,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 15,
+    "n_concepts": 30,
+    "diag_mean": 0.5675283670425415,
+    "diag_std": 0.019902987405657768,
+    "off_diag_mean": 0.5675283670425415,
+    "discriminability_mean": 3.973643192267673e-09,
+    "discriminability_per_concept": 3.973643192267673e-09,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 18,
+    "n_concepts": 30,
+    "diag_mean": 0.5665858387947083,
+    "diag_std": 0.032028235495090485,
+    "off_diag_mean": 0.566585898399353,
+    "discriminability_mean": -5.9604645663569045e-09,
+    "discriminability_per_concept": -5.9604645663569045e-09,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 20,
+    "n_concepts": 30,
+    "diag_mean": 0.4706844091415405,
+    "diag_std": 0.047020282596349716,
+    "off_diag_mean": 0.4706844091415405,
+    "discriminability_mean": 9.934107980669182e-10,
+    "discriminability_per_concept": 9.934107980669182e-10,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 22,
+    "n_concepts": 30,
+    "diag_mean": 0.476620078086853,
+    "diag_std": 0.02784363366663456,
+    "off_diag_mean": 0.47662004828453064,
+    "discriminability_mean": 6.95387525340152e-09,
+    "discriminability_per_concept": 6.95387525340152e-09,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 25,
+    "n_concepts": 30,
+    "diag_mean": 0.21598373353481293,
+    "diag_std": 0.04723468795418739,
+    "off_diag_mean": 0.21598373353481293,
+    "discriminability_mean": -7.450580707946131e-10,
+    "discriminability_per_concept": -7.450580707946131e-10,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 29,
+    "n_concepts": 30,
+    "diag_mean": 0.22049179673194885,
+    "diag_std": 0.06703145056962967,
+    "off_diag_mean": 0.22049178183078766,
+    "discriminability_mean": 5.4637592228345966e-09,
+    "discriminability_per_concept": 5.4637592228345966e-09,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 32,
+    "n_concepts": 30,
+    "diag_mean": 0.2661043405532837,
+    "diag_std": 0.020072033628821373,
+    "off_diag_mean": 0.2661043405532837,
+    "discriminability_mean": 4.967053879312289e-09,
+    "discriminability_per_concept": 4.967053879312289e-09,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  }
+]

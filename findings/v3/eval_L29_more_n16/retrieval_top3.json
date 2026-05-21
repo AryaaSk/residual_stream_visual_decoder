@@ -1,0 +1,362 @@
+[
+  {
+    "slug": "cat",
+    "top3": [
+      [
+        "cat",
+        -0.0615
+      ],
+      [
+        "dog",
+        -6.6865
+      ],
+      [
+        "house",
+        -7.5615
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "dog",
+    "top3": [
+      [
+        "dog",
+        -0.0919
+      ],
+      [
+        "cat",
+        -7.4044
+      ],
+      [
+        "house",
+        -7.4669
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "elephant",
+    "top3": [
+      [
+        "dog",
+        -4.2805
+      ],
+      [
+        "elephant",
+        -4.4055
+      ],
+      [
+        "house",
+        -5.093
+      ]
+    ],
+    "rank_of_correct": 1
+  },
+  {
+    "slug": "fish",
+    "top3": [
+      [
+        "fish",
+        -0.1016
+      ],
+      [
+        "cat",
+        -6.5391
+      ],
+      [
+        "dog",
+        -6.8516
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "bird",
+    "top3": [
+      [
+        "bird",
+        -0.1045
+      ],
+      [
+        "dog",
+        -6.6045
+      ],
+      [
+        "cat",
+        -7.792
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "horse",
+    "top3": [
+      [
+        "horse",
+        -0.1766
+      ],
+      [
+        "dog",
+        -5.1141
+      ],
+      [
+        "bird",
+        -6.9891
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "flower",
+    "top3": [
+      [
+        "flower",
+        -0.1436
+      ],
+      [
+        "star",
+        -7.3936
+      ],
+      [
+        "dog",
+        -7.6436
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "tree",
+    "top3": [
+      [
+        "tree",
+        -0.1368
+      ],
+      [
+        "cloud",
+        -7.8243
+      ],
+      [
+        "house",
+        -7.8868
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "sun",
+    "top3": [
+      [
+        "sun",
+        -0.3145
+      ],
+      [
+        "star",
+        -2.6895
+      ],
+      [
+        "flower",
+        -7.1895
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "cloud",
+    "top3": [
+      [
+        "cloud",
+        -0.1667
+      ],
+      [
+        "bird",
+        -6.0417
+      ],
+      [
+        "dog",
+        -6.9167
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "house",
+    "top3": [
+      [
+        "house",
+        -0.2118
+      ],
+      [
+        "dog",
+        -6.8993
+      ],
+      [
+        "door",
+        -7.5868
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "car",
+    "top3": [
+      [
+        "car",
+        -0.1328
+      ],
+      [
+        "house",
+        -5.2578
+      ],
+      [
+        "train",
+        -9.0703
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "airplane",
+    "top3": [
+      [
+        "bird",
+        -5.0225
+      ],
+      [
+        "airplane",
+        -5.085
+      ],
+      [
+        "car",
+        -5.335
+      ]
+    ],
+    "rank_of_correct": 1
+  },
+  {
+    "slug": "apple",
+    "top3": [
+      [
+        "apple",
+        -5.5602
+      ],
+      [
+        "tree",
+        -5.6852
+      ],
+      [
+        "leaf",
+        -5.8727
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "pizza",
+    "top3": [
+      [
+        "pizza",
+        -1.0134
+      ],
+      [
+        "dog",
+        -6.8884
+      ],
+      [
+        "fish",
+        -7.8884
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "mountain",
+    "top3": [
+      [
+        "mountain",
+        -0.1206
+      ],
+      [
+        "tree",
+        -7.1206
+      ],
+      [
+        "cloud",
+        -7.7456
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "star",
+    "top3": [
+      [
+        "star",
+        -0.4187
+      ],
+      [
+        "fish",
+        -6.6062
+      ],
+      [
+        "dog",
+        -7.0437
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "umbrella",
+    "top3": [
+      [
+        "umbrella",
+        -4.2843
+      ],
+      [
+        "house",
+        -4.7843
+      ],
+      [
+        "tree",
+        -5.4093
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "clock",
+    "top3": [
+      [
+        "clock",
+        -0.0825
+      ],
+      [
+        "house",
+        -8.27
+      ],
+      [
+        "dog",
+        -8.9575
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "banana",
+    "top3": [
+      [
+        "dog",
+        -4.1207
+      ],
+      [
+        "cat",
+        -4.2457
+      ],
+      [
+        "fish",
+        -4.3082
+      ]
+    ],
+    "rank_of_correct": 20
+  }
+]

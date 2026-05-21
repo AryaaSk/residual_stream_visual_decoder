@@ -1,0 +1,362 @@
+[
+  {
+    "slug": "cat",
+    "top3": [
+      [
+        "cat",
+        -2.0903
+      ],
+      [
+        "dog",
+        -4.4653
+      ],
+      [
+        "snake",
+        -4.9028
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "dog",
+    "top3": [
+      [
+        "truck",
+        -2.2458
+      ],
+      [
+        "car",
+        -2.9958
+      ],
+      [
+        "dog",
+        -3.6208
+      ]
+    ],
+    "rank_of_correct": 2
+  },
+  {
+    "slug": "elephant",
+    "top3": [
+      [
+        "dog",
+        -4.4164
+      ],
+      [
+        "bird",
+        -5.0414
+      ],
+      [
+        "cat",
+        -5.2914
+      ]
+    ],
+    "rank_of_correct": 38
+  },
+  {
+    "slug": "fish",
+    "top3": [
+      [
+        "car",
+        -3.7176
+      ],
+      [
+        "fish",
+        -3.9051
+      ],
+      [
+        "dog",
+        -4.6551
+      ]
+    ],
+    "rank_of_correct": 1
+  },
+  {
+    "slug": "bird",
+    "top3": [
+      [
+        "mushroom",
+        -0.4974
+      ],
+      [
+        "bird",
+        -2.9974
+      ],
+      [
+        "dog",
+        -4.9349
+      ]
+    ],
+    "rank_of_correct": 1
+  },
+  {
+    "slug": "horse",
+    "top3": [
+      [
+        "dog",
+        -1.6003
+      ],
+      [
+        "cat",
+        -2.0378
+      ],
+      [
+        "horse",
+        -4.2253
+      ]
+    ],
+    "rank_of_correct": 2
+  },
+  {
+    "slug": "flower",
+    "top3": [
+      [
+        "flower",
+        -3.275
+      ],
+      [
+        "dog",
+        -3.4625
+      ],
+      [
+        "bird",
+        -4.5875
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "tree",
+    "top3": [
+      [
+        "cat",
+        -4.8244
+      ],
+      [
+        "dog",
+        -4.9494
+      ],
+      [
+        "tree",
+        -4.9494
+      ]
+    ],
+    "rank_of_correct": 2
+  },
+  {
+    "slug": "sun",
+    "top3": [
+      [
+        "clock",
+        -4.1356
+      ],
+      [
+        "cat",
+        -5.5731
+      ],
+      [
+        "dog",
+        -5.6356
+      ]
+    ],
+    "rank_of_correct": 10
+  },
+  {
+    "slug": "cloud",
+    "top3": [
+      [
+        "snake",
+        -2.593
+      ],
+      [
+        "cloud",
+        -2.718
+      ],
+      [
+        "dog",
+        -3.7805
+      ]
+    ],
+    "rank_of_correct": 1
+  },
+  {
+    "slug": "house",
+    "top3": [
+      [
+        "car",
+        -2.0837
+      ],
+      [
+        "door",
+        -2.7712
+      ],
+      [
+        "chair",
+        -3.7712
+      ]
+    ],
+    "rank_of_correct": 3
+  },
+  {
+    "slug": "car",
+    "top3": [
+      [
+        "car",
+        -0.8036
+      ],
+      [
+        "house",
+        -3.9286
+      ],
+      [
+        "dog",
+        -4.0536
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "airplane",
+    "top3": [
+      [
+        "pencil",
+        -2.6842
+      ],
+      [
+        "car",
+        -4.9967
+      ],
+      [
+        "book",
+        -5.1217
+      ]
+    ],
+    "rank_of_correct": 25
+  },
+  {
+    "slug": "apple",
+    "top3": [
+      [
+        "banana",
+        -5.1081
+      ],
+      [
+        "leaf",
+        -5.2331
+      ],
+      [
+        "dog",
+        -5.6081
+      ]
+    ],
+    "rank_of_correct": 10
+  },
+  {
+    "slug": "pizza",
+    "top3": [
+      [
+        "clock",
+        -3.7276
+      ],
+      [
+        "car",
+        -4.5401
+      ],
+      [
+        "donut",
+        -4.8819
+      ]
+    ],
+    "rank_of_correct": 12
+  },
+  {
+    "slug": "mountain",
+    "top3": [
+      [
+        "mountain",
+        -1.8996
+      ],
+      [
+        "tree",
+        -4.2121
+      ],
+      [
+        "tent",
+        -4.3371
+      ]
+    ],
+    "rank_of_correct": 0
+  },
+  {
+    "slug": "star",
+    "top3": [
+      [
+        "bird",
+        -3.8546
+      ],
+      [
+        "dog",
+        -4.2296
+      ],
+      [
+        "cat",
+        -4.9171
+      ]
+    ],
+    "rank_of_correct": 7
+  },
+  {
+    "slug": "umbrella",
+    "top3": [
+      [
+        "mushroom",
+        -4.3448
+      ],
+      [
+        "tree",
+        -4.9073
+      ],
+      [
+        "bird",
+        -5.4073
+      ]
+    ],
+    "rank_of_correct": 32
+  },
+  {
+    "slug": "clock",
+    "top3": [
+      [
+        "bird",
+        -4.3396
+      ],
+      [
+        "dog",
+        -4.7146
+      ],
+      [
+        "cat",
+        -5.0896
+      ]
+    ],
+    "rank_of_correct": 7
+  },
+  {
+    "slug": "banana",
+    "top3": [
+      [
+        "banana",
+        -4.8241
+      ],
+      [
+        "leaf",
+        -5.4491
+      ],
+      [
+        "bird",
+        -5.5116
+      ]
+    ],
+    "rank_of_correct": 0
+  }
+]

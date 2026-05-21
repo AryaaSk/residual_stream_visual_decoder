@@ -2,6 +2,71 @@
 
 **Draw what a language model is thinking.**
 
+> **v3 — mechanistic interpretability via sketchpad decoding.** Inspired by
+> Anthropic's [natural language autoencoders](https://anthropic.com/research/natural-language-autoencoders),
+> which decode activation vectors back into natural language. We did the same,
+> but converting the activation vector into a stroke drawing instead of text.
+> Setup: frozen Qwen 3.5-4B, grab the activation `h` at block `L`, train a
+> small decoder (LoRA + projector + 262 new stroke tokens) to map `h` into
+> stroke tokens that render as a drawing. Trained per-layer at
+> L3 / L10 / L15 / L20 / L24 / L27 / L29 and scored with the foundational
+> NLA loss `log P(concept | rendered_drawing, "A drawing of a __")` under the
+> same frozen Qwen (using `AutoModelForImageTextToText`; the prior loader
+> silently discarded `pixel_values` and wasted ≈42 H200 GPU hours before we
+> caught it). Per-layer top-1 over 20 held-out concepts: L3=25%, L10=75%,
+> L15=50%, L24=80%, **L29=85%** (chance=5%, 17× chance).
+
+[![demo](artefacts/v3/viral/headline.png)](artefacts/v3/viral/demo_v2.mp4)
+
+`artefacts/v3/viral/demo_v2.mp4` — 130 s walkthrough (drawings, cross-layer
+sweeps, prompt morphs, per-token trajectories, OOD).
+
+![depth chart](artefacts/v3/viral/depth_chart.png)
+
+![7-layer cross-depth grid](artefacts/v3/viral/strips_7layer/grid.png)
+
+## What the model "draws" for ideas it was never trained on
+
+The decoder was only trained on 44 QuickDraw concepts. When given the
+activation vector for a brand new prompt, it snaps to whichever of those
+44 is nearest in activation space. Useful read-out of semantic geometry
+inside the model, not free generation:
+
+| prompt | drawing it produced |
+|---|---|
+| love | a flower |
+| childhood | the same flower |
+| god | the same flower again |
+| consciousness | an open book |
+| infinity | a truck on wheels |
+| einstein | a cat face |
+| pi | a circle |
+| death | a coffin on a horizon line |
+| freedom | a closed box |
+
+That three different prompts (love, childhood, god) all decode to the same
+flower drawing is a real measurement: those three concepts live in nearly
+the same region of Qwen's residual stream.
+
+![OOD grid L29](artefacts/v3/viral/ood_grid_L29.png)
+
+## Honest caveats
+
+What we shipped is the decoder trained on canonical QuickDraw drawings via
+supervised cross-entropy. The output drawings are the model imitating a
+training set, not the raw thing in `h`. The principled architecture
+(REINFORCE on `log P(concept | drawing)`) reached step 240 with reward EMA
+still flat. We ran out of GPU time before it could converge. Re-running it
+with more compute is the next step.
+
+Full assets in `artefacts/v3/viral/` (84 hero animations across 7 layers,
+≈250 OOD animations across 6 layers, 12 cross-layer per-concept videos,
+7-layer cross-depth strips, depth chart, scoreboard, 130 s demo).
+
+---
+
+## Older releases
+
 > **v2.2 — interpretability across depth.** We trained per-layer Activation
 > Verbalizers on Qwen 3.5-4B at L3 / L10 / L20 / L29 and rendered the same
 > prompt at each. The drawings *crystallise as depth increases*. A linear

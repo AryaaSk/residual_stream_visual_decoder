@@ -510,6 +510,143 @@ Lower than in-distribution (33-37 typical) but well above noise. The AV does gen
 
 Mechanistic, measurable, with the limits called out. That's the v2.2 interpretability claim. Full artefacts and 81-second viral video in `artefacts/v2_2/demo.mp4`.
 
+## v3 — Pure NLA reconstruction (the architecture we should have used from day 1)
+
+### The honest critique that forced the v3 pivot
+
+A reader (the user) pushed back on the project's framing during the v2.2 conversation. The criticism was sharp and correct:
+
+1. **v0-v2 never actually tested the foundational NLA claim.** The whole reason for porting to Qwen 3.5-4B (a natively multimodal model with a unified vision+text stream) was to enable "feed the drawing back, read the activation, compare to the original" — without needing a trained AR. We then never did that.
+2. **v2.0 Stage 2** (`stage2_qwen_consistency.py`) was supposed to be the test. It **leaked the original caption into the second forward pass** (`extract_h_with_image(model, image, P)` passed `text=P` alongside the image). Qwen could recover h_text from the caption alone; the image was effectively noise; reward saturated near ceiling and we (wrongly) concluded "the loop doesn't work". The loop had never actually been tested.
+3. **Every recognizable drawing in v1.2-v2.2 comes from supervised CE on canonical QuickDraw drawings**, with the activation acting only as a concept-selector among ~220 memorized templates. The "we decode thoughts from activations" claim was structurally diluted.
+
+v3 commits to the foundational architecture and drops every compromise.
+
+### Phase 0 — text/image alignment in Qwen 3.5-4B (the gating experiment)
+
+Before training, verify the hypothesis the project was built on: does Qwen 3.5-4B's residual stream actually align text and image inputs at deeper layers?
+
+`code/eval/text_image_alignment.py` — for each of 80 (caption, real canonical drawing) pairs, wrap both inputs in the Qwen-VL chat template (so the read position is structurally identical, both end with `<|im_end|>\n`), then compute `cosine(h_text, h_image)` at every layer L = 0..32.
+
+**Result was NOT what we expected** (`findings/v3/alignment/`):
+
+| layer | mean cosine | std   | interpretation                                    |
+|------:|------------:|------:|---------------------------------------------------|
+|     0 |      +1.000 | 0.000 | embedding-only artifact (both end in same `\n`)   |
+|  3-19 |   ~0.50-0.63| ~0.03 | **middle plateau** — usable signal                |
+|    10 |      +0.533 | 0.029 | matches v2.0's target layer                       |
+|    15 |      +0.567 | 0.021 | peak alignment                                    |
+|    25 |      +0.213 | 0.045 | late layers: representations diverge              |
+|    29 |      +0.212 | 0.064 | nearly orthogonal                                 |
+
+**Cosine is NOT monotonically increasing with depth.** It rises through L3 (positional artifact dropping off), plateaus in middle layers L8-L19, then sharply drops in late layers. The "unified stream converges at depth" naive hypothesis is false for Qwen 3.5-4B last-token activations.
+
+But there IS a usable alignment signal in middle layers: real canonical drawings match their captions at cosine 0.53 at L10 and 0.57 at L15. **This is the v3 training target.**
+
+Chose **L\* = 10** for training (matches v2.0's SFT checkpoint exactly so we can bootstrap option B, and is well within the middle plateau).
+
+### Phase 1 — Pure NLA training (`code/train/stage3_pure_nla.py`)
+
+The entire loss:
+
+```python
+h_text  = Qwen_frozen(chat_wrap(caption))[L10][last_token]      # no caption leak
+drawing = AV(h_text, sampled)
+image   = render(drawing)
+h_image = Qwen_frozen(chat_wrap(image_only))[L10][last_token]   # IMAGE ONLY
+reward  = cosine(h_text, h_image)
+# REINFORCE: pg_loss = - advantage.detach() * sum_log_probs(drawing | h_text)
+```
+
+That's the *entire* loss. No CLIP. No supervised CE. No min-stroke penalty. No KL anchor.
+
+**Two initialisation strategies:**
+
+- **Option A — from scratch** (`from_pretrained_and_extend`, projector = α·I, LoRA B = 0, fresh vocab rows). **Failed** as the plan anticipated: after 10 steps the AV produced 0.2 strokes mean (DRAW_CLOSE emitted immediately because the fresh stroke-vocab embeddings have no useful distribution). REINFORCE needs *some* visual prior to bootstrap from.
+- **Option B — from v2.0 SFT init**. Baseline cosine across 6 probes at step 0 = **0.49** (real canonical drawings achieve 0.53 — small gap to close). REINFORCE training pushes the AV toward producing drawings whose h_image_only better matches h_text.
+
+**Initial probe (step 0) results:**
+
+```
+cat       cosine=0.521
+dog       cosine=0.500
+eiffel    cosine=0.543
+smile     cosine=0.493
+triangle  cosine=0.475
+storm     cosine=0.392
+mean      ≈ 0.487
+```
+
+(Training results will be filled in once the run completes; cosine ema target ≥ 0.53.)
+
+### Phase 2 — Honest evaluation (`code/eval/v3_eval.py`)
+
+For 20 held-out prompts × 8 best-of-N drawings, report `cosine(h_text, h_image_only) @ L10` mean ± std. No CLIP scores in the v3 evaluation; the model itself is the only oracle.
+
+### Phase 3 — Discriminability falsifier
+
+For each held-out prompt i, the AV's drawing should reconstruct **its own** prompt's h better than other prompts' h. Build a pairwise cosine matrix M[i,j] = cosine(h_text_i, h_image_j); the diagonal should be the row-max. If `mean(diag) - mean(off-diag) > 0.05`, the AV has learned to produce drawings whose latent representations are concept-specific. Otherwise, the AV is producing drawings near a "concept-mean" — the cluster-mean failure mode from v0/v1, just with a frozen oracle.
+
+This is the **honest interpretability claim** v3 either earns or doesn't.
+
+### Side-by-side v3 vs v2.0 (`code/eval/v3_vs_v2_compare.py`)
+
+For each hero prompt, render:
+- v2.0 best-of-N CLIP-ranked drawing (canonical-SFT-derived, polished but concept-selector)
+- v3 best-of-N cosine-ranked drawing (pure NLA, may be abstract but is what the model considers equivalent)
+
+Both labeled with both metrics (CLIP and v3-cosine) for honest comparison.
+
+### The bug that invalidated v2.0/v2.1 Stage 2 (and the first v3 attempt)
+
+While running the v3 discriminability diagnostic (cosine(h_text_i, h_image_j) for all i,j pairs), every layer reported diag = off-diag = 0.0 exactly. That smelled wrong.
+
+Direct probe: feed Qwen 3.5-4B a cat image, then a flower image, compare h_image at any layer:
+
+```
+cosine(h_cat_image, h_flower_image) = 1.000000
+||h_cat|| = 9.253, ||h_flower|| = 9.253
+identical?  True
+max abs diff: 0.000000
+```
+
+**The activations were bit-for-bit identical regardless of image content.** Qwen wasn't processing the image at all.
+
+Root cause: every script in v0-v2 used `AutoModelForCausalLM.from_pretrained("Qwen/Qwen3.5-4B")` to load the evaluator. The correct loader for this model (architecture `Qwen3_5ForConditionalGeneration`) is `AutoModelForImageTextToText`, which loads the vision encoder. `AutoModelForCausalLM` loaded only the text path; `pixel_values` arguments were silently dropped. Every image-input forward we ever did was actually a text-template-only forward with the image data discarded.
+
+After switching to `AutoModelForImageTextToText`:
+
+```
+cosine(h_cat_image, h_flower_image) = 0.8538     (NOT 1.0)
+identical?  False
+max abs diff: 0.551
+```
+
+The model now actually consumes pixel_values. Re-running the discriminability diagnostic with the correct loader to see if Qwen 3.5-4B's residual stream genuinely carries cross-modal concept-specific signal.
+
+**This means:**
+- v2.0 Stage 2 `stage2_qwen_consistency.py` reward saturated near ceiling not because the reward landscape was uninformative, but because the reward function was reading text-scaffold cosine with image=ignored. The caption leak was the smaller bug; **the loader bug was the bigger one**.
+- v2.1 contrastive Stage 2 margin staying at zero was also dominated by this — both `sim_pos` and `sim_neg` were image-agnostic.
+- The "v2.0 cosine ceiling at L10 = 0.533" we reported in alignment was actually just chat-template-position similarity, not text/image alignment.
+
+The v3 (and the entire project's) story can't be told honestly without re-doing the foundational measurements with the correct loader. Doing that now.
+
+### What v3 ships
+
+(Placeholder until re-run completes with correct loader. Either:
+- v3 cosine clearly above 0.53 baseline + discriminability > 0.05 → the foundational NLA claim is delivered.
+- v3 cosine ≈ baseline + discriminability ≈ 0 → AV learned cluster-mean; honest cluster-mean finding shipped.
+- v3 reward EMA flat → REINFORCE structurally can't move this loss; project's signal is too weak; ship the null result.)
+
+The point is to ship the answer, not the wish.
+
+### What v3 does NOT compromise on
+
+- Image-only second forward pass. Caption never appears in the reconstruction graph.
+- One loss. cosine(h_text, h_image_only). No CLIP, no supervised CE, no auxiliary regularisers.
+- One oracle. The frozen Qwen 3.5-4B itself. No CLIP-as-judge.
+- One number to report. The honest cosine. Plus the discriminability falsifier.
+
 ### The interpretability claim v2.2 actually makes
 
 > The Qwen 3.5-4B residual stream's content at layer L can be visualised by training a small Activation Verbalizer per layer. The AV is genuinely h-sensitive (69 % prompt→concept match at L10 vs 5 % chance), but L10 alone is not the right place to look — concept specificity emerges across depth. Cross-layer trajectories show the drawing crystallising as L grows. Interpolation morphs show the AV decoding h continuously. The OOD demo shows the AV generalises to unseen concepts via the residual stream's content rather than memorised templates. A linear probe quantifies the per-layer ceiling.

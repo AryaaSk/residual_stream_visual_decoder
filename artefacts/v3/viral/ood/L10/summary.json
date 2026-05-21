@@ -1,0 +1,307 @@
+[
+  {
+    "slug": "eiffel",
+    "prompt": "The Eiffel Tower in Paris.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "skyscraper",
+    "prompt": "A skyscraper at night.",
+    "n_strokes": 77
+  },
+  {
+    "slug": "guitar",
+    "prompt": "I am picturing a guitar.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "robot",
+    "prompt": "A friendly robot.",
+    "n_strokes": 63
+  },
+  {
+    "slug": "volcano",
+    "prompt": "A volcano erupting.",
+    "n_strokes": 72
+  },
+  {
+    "slug": "crown",
+    "prompt": "A king's crown.",
+    "n_strokes": 72
+  },
+  {
+    "slug": "happy",
+    "prompt": "The feeling of being happy.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "sad",
+    "prompt": "I am feeling sad.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "anger",
+    "prompt": "I am feeling angry.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "love",
+    "prompt": "The feeling of love.",
+    "n_strokes": 74
+  },
+  {
+    "slug": "loneliness",
+    "prompt": "A feeling of deep loneliness.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "nostalgia",
+    "prompt": "The feeling of nostalgia.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "colour_purple",
+    "prompt": "The colour purple.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "colour_red",
+    "prompt": "The colour red.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "warmth",
+    "prompt": "The warmth of the sun on your skin.",
+    "n_strokes": 65
+  },
+  {
+    "slug": "silence",
+    "prompt": "Total silence.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "rain_sound",
+    "prompt": "The sound of rain on a window.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "memory",
+    "prompt": "An old memory.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "infinity",
+    "prompt": "Infinity.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "two_plus_two",
+    "prompt": "Two plus two equals four.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "triangle",
+    "prompt": "A triangle inscribed in a circle.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "pi",
+    "prompt": "The number pi.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "zero",
+    "prompt": "The concept of zero.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "many",
+    "prompt": "A very large number of things.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "midnight",
+    "prompt": "It is midnight.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "morning",
+    "prompt": "Early morning sunrise.",
+    "n_strokes": 60
+  },
+  {
+    "slug": "flying",
+    "prompt": "The sensation of flying.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "falling",
+    "prompt": "Falling through the air.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "once_upon",
+    "prompt": "Once upon a time in a kingdom far away.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "capital_japan",
+    "prompt": "The capital of Japan is Tokyo.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "speed_of_light",
+    "prompt": "The speed of light is constant.",
+    "n_strokes": 73
+  },
+  {
+    "slug": "rainbow",
+    "prompt": "A rainbow appears after the rain.",
+    "n_strokes": 51
+  },
+  {
+    "slug": "god",
+    "prompt": "God.",
+    "n_strokes": 71
+  },
+  {
+    "slug": "death",
+    "prompt": "Death.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "dreams",
+    "prompt": "Dreams.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "the_universe",
+    "prompt": "The entire universe.",
+    "n_strokes": 76
+  },
+  {
+    "slug": "consciousness",
+    "prompt": "Consciousness.",
+    "n_strokes": 63
+  },
+  {
+    "slug": "nothingness",
+    "prompt": "Pure nothingness.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "forever",
+    "prompt": "Forever and ever.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "inside_a_dream",
+    "prompt": "Being inside a dream.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "home",
+    "prompt": "Home.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "freedom",
+    "prompt": "The feeling of freedom.",
+    "n_strokes": 78
+  },
+  {
+    "slug": "fear",
+    "prompt": "Primal fear.",
+    "n_strokes": 51
+  },
+  {
+    "slug": "hope",
+    "prompt": "Hope.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "childhood",
+    "prompt": "A memory from childhood.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "first_love",
+    "prompt": "Your first love.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "grief",
+    "prompt": "Profound grief.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "longing",
+    "prompt": "Quiet longing.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "regret",
+    "prompt": "Deep regret.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "wonder",
+    "prompt": "A sense of wonder.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "paris",
+    "prompt": "Paris.",
+    "n_strokes": 65
+  },
+  {
+    "slug": "tokyo",
+    "prompt": "Tokyo.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "the_beatles",
+    "prompt": "The Beatles.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "shakespeare",
+    "prompt": "Shakespeare.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "einstein",
+    "prompt": "Einstein.",
+    "n_strokes": 56
+  },
+  {
+    "slug": "napoleon",
+    "prompt": "Napoleon Bonaparte.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "not_a_cat",
+    "prompt": "Not a cat. Definitely not a cat.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "draw_nothing",
+    "prompt": "Draw nothing at all.",
+    "n_strokes": 79
+  },
+  {
+    "slug": "everything",
+    "prompt": "Draw everything.",
+    "n_strokes": 78
+  },
+  {
+    "slug": "the_question",
+    "prompt": "What is the question?",
+    "n_strokes": 79
+  },
+  {
+    "slug": "the_answer",
+    "prompt": "42.",
+    "n_strokes": 79
+  }
+]

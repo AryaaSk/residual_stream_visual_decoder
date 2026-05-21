@@ -1,0 +1,132 @@
+[
+  {
+    "layer": 0,
+    "n_concepts": 30,
+    "diag_mean": 0.07787194848060608,
+    "off_diag_mean": 0.07787193357944489,
+    "discriminability_mean": -5.898376231883162e-10,
+    "discriminability_std": 1.496405488410346e-08,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 3,
+    "n_concepts": 30,
+    "diag_mean": -0.010524418205022812,
+    "off_diag_mean": -0.010524418205022812,
+    "discriminability_mean": -1.7074247571358114e-10,
+    "discriminability_std": 2.1917294645845686e-09,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 5,
+    "n_concepts": 30,
+    "diag_mean": 0.025517811998724937,
+    "off_diag_mean": 0.025517811998724937,
+    "discriminability_mean": 5.432714833553121e-10,
+    "discriminability_std": 3.362412792640157e-09,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 8,
+    "n_concepts": 30,
+    "diag_mean": 0.0485537126660347,
+    "off_diag_mean": 0.0485537126660347,
+    "discriminability_mean": 1.9247332616600943e-09,
+    "discriminability_std": 6.111507300232688e-09,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 10,
+    "n_concepts": 30,
+    "diag_mean": 0.13501915335655212,
+    "off_diag_mean": 0.13501915335655212,
+    "discriminability_mean": 9.934107980669182e-10,
+    "discriminability_std": 1.3009509025607713e-08,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 12,
+    "n_concepts": 30,
+    "diag_mean": 0.20227661728858948,
+    "off_diag_mean": 0.20227661728858948,
+    "discriminability_mean": 9.43740197101306e-09,
+    "discriminability_std": 2.6231496974560287e-08,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 15,
+    "n_concepts": 30,
+    "diag_mean": 0.15052920579910278,
+    "off_diag_mean": 0.15052920579910278,
+    "discriminability_mean": -9.934107980669182e-10,
+    "discriminability_std": 1.4868009934332349e-08,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 18,
+    "n_concepts": 30,
+    "diag_mean": 0.22963634133338928,
+    "off_diag_mean": 0.22963635623455048,
+    "discriminability_mean": 3.47693762670076e-09,
+    "discriminability_std": 2.5718595253465537e-08,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 20,
+    "n_concepts": 30,
+    "diag_mean": 0.1408856064081192,
+    "off_diag_mean": 0.1408856064081192,
+    "discriminability_mean": 0.0,
+    "discriminability_std": 1.3047382729780566e-08,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 22,
+    "n_concepts": 30,
+    "diag_mean": 0.15753886103630066,
+    "off_diag_mean": 0.15753886103630066,
+    "discriminability_mean": 3.973643192267673e-09,
+    "discriminability_std": 1.8121237843615745e-08,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 25,
+    "n_concepts": 30,
+    "diag_mean": 0.26247289776802063,
+    "off_diag_mean": 0.26247286796569824,
+    "discriminability_mean": 3.47693762670076e-09,
+    "discriminability_std": 1.8723881112236995e-08,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 29,
+    "n_concepts": 30,
+    "diag_mean": 0.3421078324317932,
+    "off_diag_mean": 0.3421078324317932,
+    "discriminability_mean": 0.0,
+    "discriminability_std": 4.214684778958144e-08,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  },
+  {
+    "layer": 32,
+    "n_concepts": 30,
+    "diag_mean": 0.1380806565284729,
+    "off_diag_mean": 0.1380806565284729,
+    "discriminability_mean": 3.47693762670076e-09,
+    "discriminability_std": 1.5236796713224976e-08,
+    "top1_retrieval": 0.03333333333333333,
+    "top1_chance": 0.03333333333333333
+  }
+]

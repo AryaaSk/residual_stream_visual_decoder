@@ -1,0 +1,334 @@
+{
+  "layers": [
+    3,
+    10,
+    20,
+    29
+  ],
+  "prompts": [
+    {
+      "slug": "cat",
+      "prompt": "I am thinking about a cat.",
+      "concept": "cat",
+      "per_layer": {
+        "3": {
+          "logp": -3.8698623180389404,
+          "n_strokes": 43,
+          "n_candidates": 16
+        },
+        "10": {
+          "logp": -0.07110092043876648,
+          "n_strokes": 73,
+          "n_candidates": 16
+        },
+        "20": {
+          "logp": -1.7842967510223389,
+          "n_strokes": 71,
+          "n_candidates": 16
+        },
+        "29": {
+          "logp": -0.07110092043876648,
+          "n_strokes": 73,
+          "n_candidates": 16
+        }
+      }
+    },
+    {
+      "slug": "dog",
+      "prompt": "I am thinking about a dog.",
+      "concept": "dog",
+      "per_layer": {
+        "3": {
+          "logp": -2.620710849761963,
+          "n_strokes": 39,
+          "n_candidates": 16
+        },
+        "10": {
+          "logp": -0.09191706776618958,
+          "n_strokes": 65,
+          "n_candidates": 16
+        },
+        "20": {
+          "logp": -2.282266855239868,
+          "n_strokes": 79,
+          "n_candidates": 16
+        },
+        "29": {
+          "logp": -0.09191706776618958,
+          "n_strokes": 65,
+          "n_candidates": 16
+        }
+      }
+    },
+    {
+      "slug": "elephant",
+      "prompt": "I am thinking about an elephant.",
+      "concept": "elephant",
+      "per_layer": {
+        "3": {
+          "logp": -10.147446632385254,
+          "n_strokes": 74,
+          "n_candidates": 16
+        },
+        "10": {
+          "logp": -4.4055094718933105,
+          "n_strokes": 63,
+          "n_candidates": 16
+        },
+        "20": {
+          "logp": -11.239764213562012,
+          "n_strokes": 51,
+          "n_candidates": 16
+        },
+        "29": {
+          "logp": -4.4055094718933105,
+          "n_strokes": 63,
+          "n_candidates": 16
+        }
+      }
+    },
+    {
+      "slug": "fish",
+      "prompt": "Imagine a fish.",
+      "concept": "fish",
+      "per_layer": {
+        "3": {
+          "logp": -2.4030709266662598,
+          "n_strokes": 43,
+          "n_candidates": 16
+        },
+        "10": {
+          "logp": -0.10155252367258072,
+          "n_strokes": 45,
+          "n_candidates": 16
+        },
+        "20": {
+          "logp": -1.6601353883743286,
+          "n_strokes": 44,
+          "n_candidates": 16
+        },
+        "29": {
+          "logp": -0.10155252367258072,
+          "n_strokes": 45,
+          "n_candidates": 16
+        }
+      }
+    },
+    {
+      "slug": "horse",
+      "prompt": "I am thinking about a horse.",
+      "concept": "horse",
+      "per_layer": {
+        "3": {
+          "logp": -5.101593971252441,
+          "n_strokes": 79,
+          "n_candidates": 16
+        },
+        "10": {
+          "logp": -5.013269424438477,
+          "n_strokes": 79,
+          "n_candidates": 16
+        },
+        "20": {
+          "logp": -5.703640937805176,
+          "n_strokes": 79,
+          "n_candidates": 16
+        },
+        "29": {
+          "logp": -0.17656753957271576,
+          "n_strokes": 53,
+          "n_candidates": 16
+        }
+      }
+    },
+    {
+      "slug": "flower",
+      "prompt": "Imagine a flower in bloom.",
+      "concept": "flower",
+      "per_layer": {
+        "3": {
+          "logp": -5.855057716369629,
+          "n_strokes": 35,
+          "n_candidates": 16
+        },
+        "10": {
+          "logp": -0.14357617497444153,
+          "n_strokes": 63,
+          "n_candidates": 16
+        },
+        "20": {
+          "logp": -2.928323745727539,
+          "n_strokes": 79,
+          "n_candidates": 16
+        },
+        "29": {
+          "logp": -0.14357617497444153,
+          "n_strokes": 63,
+          "n_candidates": 16
+        }
+      }
+    },
+    {
+      "slug": "sun",
+      "prompt": "The sun is shining.",
+      "concept": "sun",
+      "per_layer": {
+        "3": {
+          "logp": -6.882472991943359,
+          "n_strokes": 40,
+          "n_candidates": 16
+        },
+        "10": {
+          "logp": -0.3318716585636139,
+          "n_strokes": 42,
+          "n_candidates": 16
+        },
+        "20": {
+          "logp": -6.744943618774414,
+          "n_strokes": 49,
+          "n_candidates": 16
+        },
+        "29": {
+          "logp": -7.2179131507873535,
+          "n_strokes": 64,
+          "n_candidates": 16
+        }
+      }
+    },
+    {
+      "slug": "tree",
+      "prompt": "I am picturing a tree.",
+      "concept": "tree",
+      "per_layer": {
+        "3": {
+          "logp": -2.2646219730377197,
+          "n_strokes": 61,
+          "n_candidates": 16
+        },
+        "10": {
+          "logp": -0.15283043682575226,
+          "n_strokes": 67,
+          "n_candidates": 16
+        },
+        "20": {
+          "logp": -4.2551422119140625,
+          "n_strokes": 79,
+          "n_candidates": 16
+        },
+        "29": {
+          "logp": -0.13682091236114502,
+          "n_strokes": 61,
+          "n_candidates": 16
+        }
+      }
+    },
+    {
+      "slug": "airplane",
+      "prompt": "I am picturing an airplane.",
+      "concept": "airplane",
+      "per_layer": {
+        "3": {
+          "logp": -8.40654182434082,
+          "n_strokes": 55,
+          "n_candidates": 16
+        },
+        "10": {
+          "logp": -5.0849928855896,
+          "n_strokes": 49,
+          "n_candidates": 16
+        },
+        "20": {
+          "logp": -8.656484603881836,
+          "n_strokes": 61,
+          "n_candidates": 16
+        },
+        "29": {
+          "logp": -5.0849928855896,
+          "n_strokes": 49,
+          "n_candidates": 16
+        }
+      }
+    },
+    {
+      "slug": "car",
+      "prompt": "I am thinking about a car.",
+      "concept": "car",
+      "per_layer": {
+        "3": {
+          "logp": -0.8697298765182495,
+          "n_strokes": 72,
+          "n_candidates": 16
+        },
+        "10": {
+          "logp": -0.13275904953479767,
+          "n_strokes": 57,
+          "n_candidates": 16
+        },
+        "20": {
+          "logp": -1.12726891040802,
+          "n_strokes": 58,
+          "n_candidates": 16
+        },
+        "29": {
+          "logp": -0.13275904953479767,
+          "n_strokes": 57,
+          "n_candidates": 16
+        }
+      }
+    },
+    {
+      "slug": "pizza",
+      "prompt": "I am thinking about a pizza.",
+      "concept": "pizza",
+      "per_layer": {
+        "3": {
+          "logp": -6.689062118530273,
+          "n_strokes": 70,
+          "n_candidates": 16
+        },
+        "10": {
+          "logp": -1.4608429670333862,
+          "n_strokes": 79,
+          "n_candidates": 16
+        },
+        "20": {
+          "logp": -7.852483749389648,
+          "n_strokes": 79,
+          "n_candidates": 16
+        },
+        "29": {
+          "logp": -1.4608429670333862,
+          "n_strokes": 79,
+          "n_candidates": 16
+        }
+      }
+    },
+    {
+      "slug": "mountain",
+      "prompt": "I am picturing a mountain.",
+      "concept": "mountain",
+      "per_layer": {
+        "3": {
+          "logp": -2.621856927871704,
+          "n_strokes": 31,
+          "n_candidates": 16
+        },
+        "10": {
+          "logp": -0.12056399881839752,
+          "n_strokes": 33,
+          "n_candidates": 16
+        },
+        "20": {
+          "logp": -4.873036861419678,
+          "n_strokes": 33,
+          "n_candidates": 16
+        },
+        "29": {
+          "logp": -0.12056399881839752,
+          "n_strokes": 33,
+          "n_candidates": 16
+        }
+      }
+    }
+  ]
+}

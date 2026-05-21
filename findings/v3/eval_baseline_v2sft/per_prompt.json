@@ -1,0 +1,189 @@
+{
+  "n_prompts": 20,
+  "n_valid": 20,
+  "best_cosine_mean": 0.485345,
+  "best_cosine_std": 0.05462603294217877,
+  "mean_cosine_mean": 0.485345,
+  "per_prompt": [
+    {
+      "slug": "cat",
+      "prompt": "I am thinking about a cat.",
+      "best_cosine": 0.5208,
+      "mean_cosine": 0.5208,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 8.5
+    },
+    {
+      "slug": "dog",
+      "prompt": "I am thinking about a dog.",
+      "best_cosine": 0.5003,
+      "mean_cosine": 0.5003,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 7.9
+    },
+    {
+      "slug": "elephant",
+      "prompt": "I am thinking about an elephant.",
+      "best_cosine": 0.4571,
+      "mean_cosine": 0.4571,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 6.4
+    },
+    {
+      "slug": "fish",
+      "prompt": "Imagine a fish.",
+      "best_cosine": 0.4751,
+      "mean_cosine": 0.4751,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 5.1
+    },
+    {
+      "slug": "bird",
+      "prompt": "I am picturing a bird flying across the sky.",
+      "best_cosine": 0.4626,
+      "mean_cosine": 0.4626,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 7.5
+    },
+    {
+      "slug": "horse",
+      "prompt": "I am thinking about a horse.",
+      "best_cosine": 0.5196,
+      "mean_cosine": 0.5196,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 6.2
+    },
+    {
+      "slug": "flower",
+      "prompt": "Imagine a flower in bloom.",
+      "best_cosine": 0.5138,
+      "mean_cosine": 0.5138,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 8.6
+    },
+    {
+      "slug": "tree",
+      "prompt": "I am picturing a tree.",
+      "best_cosine": 0.5529,
+      "mean_cosine": 0.5529,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 7.3
+    },
+    {
+      "slug": "sun",
+      "prompt": "The sun is shining.",
+      "best_cosine": 0.5026,
+      "mean_cosine": 0.5026,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 7.9
+    },
+    {
+      "slug": "cloud",
+      "prompt": "I am picturing a cloud in the sky.",
+      "best_cosine": 0.3854,
+      "mean_cosine": 0.3854,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 8.6
+    },
+    {
+      "slug": "house",
+      "prompt": "I am picturing a small house with a red roof.",
+      "best_cosine": 0.5212,
+      "mean_cosine": 0.5212,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 8.6
+    },
+    {
+      "slug": "car",
+      "prompt": "I am thinking about a car.",
+      "best_cosine": 0.5548,
+      "mean_cosine": 0.5548,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 8.6
+    },
+    {
+      "slug": "airplane",
+      "prompt": "I am picturing an airplane.",
+      "best_cosine": 0.5319,
+      "mean_cosine": 0.5319,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 6.0
+    },
+    {
+      "slug": "apple",
+      "prompt": "I am thinking about an apple.",
+      "best_cosine": 0.3947,
+      "mean_cosine": 0.3947,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 5.2
+    },
+    {
+      "slug": "pizza",
+      "prompt": "I am thinking about a pizza.",
+      "best_cosine": 0.3867,
+      "mean_cosine": 0.3867,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 8.7
+    },
+    {
+      "slug": "mountain",
+      "prompt": "I am picturing a mountain.",
+      "best_cosine": 0.524,
+      "mean_cosine": 0.524,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 3.9
+    },
+    {
+      "slug": "eiffel",
+      "prompt": "Paris, the city of lights, is famous for the Eiffel",
+      "best_cosine": 0.5434,
+      "mean_cosine": 0.5434,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 7.4
+    },
+    {
+      "slug": "smile",
+      "prompt": "I am picturing a smiling face.",
+      "best_cosine": 0.4933,
+      "mean_cosine": 0.4933,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 7.0
+    },
+    {
+      "slug": "triangle",
+      "prompt": "Imagine a triangle inscribed in a circle.",
+      "best_cosine": 0.4745,
+      "mean_cosine": 0.4745,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 8.7
+    },
+    {
+      "slug": "storm",
+      "prompt": "When the storm hit the village.",
+      "best_cosine": 0.3922,
+      "mean_cosine": 0.3922,
+      "std_cosine": 0.0,
+      "n_candidates": 8,
+      "wallclock_s": 7.5
+    }
+  ]
+}
